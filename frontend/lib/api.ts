@@ -1,4 +1,4 @@
-const API_BASE_URL =
+export const API_BASE_URL =
   process.env.API_BASE_URL ??
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   "http://localhost:8000";
@@ -32,6 +32,53 @@ export type Opportunity = {
   risk_flags: string[];
   explanation: string | null;
   created_at: string;
+};
+
+export type Listing = {
+  id: number;
+  source: string;
+  source_listing_id: string;
+  listing_url: string | null;
+  seller_country: string;
+  seller_type: string;
+  brand: string;
+  model: string;
+  variant: string | null;
+  trim: string | null;
+  year: number;
+  mileage_km: number;
+  fuel_type: string | null;
+  transmission: string | null;
+  body_type: string | null;
+  price_eur: number;
+  currency: string;
+  vat_deductible: boolean;
+  damaged: boolean;
+  service_history: string | null;
+  scraped_at: string;
+  created_at: string;
+};
+
+export type ListingCreate = {
+  source?: string;
+  source_listing_id?: string;
+  listing_url?: string;
+  seller_country?: string;
+  seller_type?: string;
+  brand: string;
+  model: string;
+  variant?: string;
+  trim?: string;
+  year: number;
+  mileage_km: number;
+  fuel_type?: string;
+  transmission?: string;
+  body_type?: string;
+  price_eur: number;
+  vat_deductible?: boolean;
+  damaged?: boolean;
+  service_history?: string;
+  description?: string;
 };
 
 export type DashboardSummary = {

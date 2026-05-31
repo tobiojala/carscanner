@@ -1,3 +1,4 @@
+import { ManualListingForm } from "../components/manual-listing-form";
 import { getDashboardSummary, getOpportunities } from "../lib/api";
 
 export const dynamic = "force-dynamic";
@@ -128,6 +129,8 @@ export default async function DashboardPage() {
           </p>
         </article>
       </section>
+
+      <ManualListingForm />
 
       <section className="table-card">
         <div className="table-header">

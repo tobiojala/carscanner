@@ -1,15 +1,34 @@
 from collections import Counter
+from decimal import Decimal
 from statistics import mean
+from uuid import uuid4
 
+from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import CarListing, Deal
-from app.schemas import DashboardSummary, DealOpportunityRead, ListingRead
+from app.models import CarListing, CostAssumption, Deal, ModelResearch, SwedishComparable
+from app.schemas import (
+    ComparableCreate,
+    ComparableRead,
+    DashboardSummary,
+    DealCalculateRequest,
+    DealOpportunityRead,
+    ListingCreate,
+    ListingRead,
+    ListingUpdate,
+)
+from app.scoring import DealScoringInput, ProfitCalculationInput, calculate_profit, score_deal
 
 
 def _money(value: object) -> float:
     return float(value or 0)
+
+
+def _decimal(value: float | Decimal | None, fallback: Decimal) -> Decimal:
+    if value is None:
+        return fallback
+    return Decimal(str(value))
 
 
 def _to_listing_read(listing: CarListing) -> ListingRead:
@@ -37,6 +56,10 @@ def _to_listing_read(listing: CarListing) -> ListingRead:
         scraped_at=listing.scraped_at,
         created_at=listing.created_at,
     )
+
+
+def _to_comparable_read(comparable: SwedishComparable) -> ComparableRead:
+    return ComparableRead.model_validate(comparable)
 
 
 def _to_opportunity_read(deal: Deal) -> DealOpportunityRead:
@@ -73,9 +96,222 @@ def _to_opportunity_read(deal: Deal) -> DealOpportunityRead:
     )
 
 
+def _get_listing_or_404(db: Session, listing_id: int) -> CarListing:
+    listing = db.get(CarListing, listing_id)
+    if listing is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Listing not found",
+        )
+    return listing
+
+
+def _get_cost_assumptions(db: Session) -> CostAssumption:
+    assumptions = db.scalars(select(CostAssumption).limit(1)).first()
+    if assumptions is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cost assumptions must be seeded before calculating deals",
+        )
+    return assumptions
+
+
+def _comparable_count_for_listing(db: Session, listing: CarListing) -> int:
+    return len(
+        db.scalars(
+            select(SwedishComparable.id).where(
+                SwedishComparable.brand == listing.brand,
+                SwedishComparable.model == listing.model,
+            )
+        ).all()
+    )
+
+
+def _average_listing_age_for_listing(db: Session, listing: CarListing) -> int:
+    ages = db.scalars(
+        select(SwedishComparable.listing_age_days).where(
+            SwedishComparable.brand == listing.brand,
+            SwedishComparable.model == listing.model,
+        )
+    ).all()
+    known_ages = [age for age in ages if age is not None]
+    if not known_ages:
+        return 45
+    return round(sum(known_ages) / len(known_ages))
+
+
+def _model_liquidity_score(db: Session, listing: CarListing) -> int:
+    research = db.scalars(
+        select(ModelResearch).where(
+            ModelResearch.brand == listing.brand,
+            ModelResearch.model == listing.model,
+        )
+    ).first()
+    return research.liquidity_score if research else 70
+
+
 def list_listings(db: Session) -> list[ListingRead]:
     listings = db.scalars(select(CarListing).order_by(CarListing.id)).all()
     return [_to_listing_read(listing) for listing in listings]
+
+
+def get_listing(db: Session, listing_id: int) -> ListingRead:
+    return _to_listing_read(_get_listing_or_404(db, listing_id))
+
+
+def create_listing(db: Session, payload: ListingCreate) -> ListingRead:
+    source_listing_id = payload.source_listing_id or f"manual-{uuid4().hex[:12]}"
+    existing = db.scalars(
+        select(CarListing).where(
+            CarListing.source == payload.source,
+            CarListing.source_listing_id == source_listing_id,
+        )
+    ).first()
+    if existing is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A listing with this source and source_listing_id already exists",
+        )
+
+    data = payload.model_dump()
+    data["source_listing_id"] = source_listing_id
+    listing = CarListing(**data, raw_data={"input_method": "manual"})
+    db.add(listing)
+    db.commit()
+    db.refresh(listing)
+    return _to_listing_read(listing)
+
+
+def update_listing(db: Session, listing_id: int, payload: ListingUpdate) -> ListingRead:
+    listing = _get_listing_or_404(db, listing_id)
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(listing, field, value)
+    db.commit()
+    db.refresh(listing)
+    return _to_listing_read(listing)
+
+
+def delete_listing(db: Session, listing_id: int) -> None:
+    listing = _get_listing_or_404(db, listing_id)
+    db.delete(listing)
+    db.commit()
+
+
+def list_comparables(db: Session) -> list[ComparableRead]:
+    comparables = db.scalars(
+        select(SwedishComparable).order_by(SwedishComparable.created_at.desc())
+    ).all()
+    return [_to_comparable_read(comparable) for comparable in comparables]
+
+
+def create_comparable(db: Session, payload: ComparableCreate) -> ComparableRead:
+    comparable = SwedishComparable(**payload.model_dump())
+    db.add(comparable)
+    db.commit()
+    db.refresh(comparable)
+    return _to_comparable_read(comparable)
+
+
+def calculate_deal(db: Session, payload: DealCalculateRequest) -> DealOpportunityRead:
+    listing = _get_listing_or_404(db, payload.listing_id)
+    assumptions = _get_cost_assumptions(db)
+
+    desired_profit_sek = _decimal(
+        payload.desired_profit_sek,
+        assumptions.minimum_profit_threshold_sek,
+    )
+    estimated_swedish_price_sek = Decimal(str(payload.estimated_swedish_price_sek))
+    transport_cost_sek = _decimal(
+        payload.transport_cost_sek,
+        assumptions.default_transport_cost_sek,
+    )
+    registration_cost_sek = _decimal(
+        payload.registration_cost_sek,
+        assumptions.default_registration_cost_sek,
+    )
+    inspection_cost_sek = _decimal(
+        payload.inspection_cost_sek,
+        assumptions.default_inspection_cost_sek,
+    )
+    repair_buffer_sek = _decimal(
+        payload.repair_buffer_sek,
+        assumptions.default_repair_buffer_sek,
+    )
+    tax_cost_sek = _decimal(payload.tax_cost_sek, assumptions.default_tax_cost_sek)
+    other_costs_sek = _decimal(
+        payload.other_costs_sek,
+        assumptions.default_other_costs_sek,
+    )
+
+    profit = calculate_profit(
+        ProfitCalculationInput(
+            purchase_price_eur=listing.price_eur,
+            eur_to_sek_rate=assumptions.eur_to_sek_rate,
+            estimated_swedish_price_sek=estimated_swedish_price_sek,
+            transport_cost_sek=transport_cost_sek,
+            registration_cost_sek=registration_cost_sek,
+            inspection_cost_sek=inspection_cost_sek,
+            repair_buffer_sek=repair_buffer_sek,
+            tax_cost_sek=tax_cost_sek,
+            other_costs_sek=other_costs_sek,
+            desired_profit_sek=desired_profit_sek,
+        )
+    )
+
+    scoring = score_deal(
+        DealScoringInput(
+            expected_profit_sek=float(profit.expected_profit_sek),
+            comparable_count=_comparable_count_for_listing(db, listing),
+            mileage_difference_km=12_000,
+            year_difference=1,
+            trim_matches=True,
+            seller_type=listing.seller_type,
+            has_service_history=bool(
+                listing.service_history
+                and "partial" not in listing.service_history.lower()
+            ),
+            damaged=listing.damaged,
+            accident_history=bool(
+                listing.accident_history
+                and "minor" in listing.accident_history.lower()
+            ),
+            missing_data_points=0,
+            average_listing_age_days=_average_listing_age_for_listing(db, listing),
+            model_popularity_score=_model_liquidity_score(db, listing),
+        )
+    )
+
+    deal = Deal(
+        foreign_listing_id=listing.id,
+        estimated_swedish_price_sek=estimated_swedish_price_sek,
+        purchase_price_sek=profit.purchase_price_sek,
+        transport_cost_sek=transport_cost_sek,
+        registration_cost_sek=registration_cost_sek,
+        inspection_cost_sek=inspection_cost_sek,
+        repair_buffer_sek=repair_buffer_sek,
+        tax_cost_sek=tax_cost_sek,
+        other_costs_sek=other_costs_sek,
+        total_landed_cost_sek=profit.total_landed_cost_sek,
+        expected_profit_sek=profit.expected_profit_sek,
+        margin_percent=profit.margin_percent,
+        confidence_score=scoring.confidence_score,
+        risk_score=scoring.risk_score,
+        liquidity_score=scoring.liquidity_score,
+        deal_grade=scoring.deal_grade,
+        status="new",
+        notes="Calculated from manual input.",
+        explanation=scoring.explanation,
+        risk_flags=scoring.risk_flags,
+    )
+    db.add(deal)
+    db.commit()
+    db.refresh(deal)
+    deal = db.scalars(
+        select(Deal)
+        .options(selectinload(Deal.foreign_listing))
+        .where(Deal.id == deal.id)
+    ).one()
+    return _to_opportunity_read(deal)
 
 
 def list_opportunities(db: Session) -> list[DealOpportunityRead]:

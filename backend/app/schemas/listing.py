@@ -1,6 +1,57 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class ListingBase(BaseModel):
+    source: str = "manual"
+    source_listing_id: str | None = None
+    listing_url: str | None = None
+    seller_country: str = "DE"
+    seller_type: str = "dealer"
+    brand: str
+    model: str
+    variant: str | None = None
+    trim: str | None = None
+    year: int = Field(ge=1900, le=2100)
+    mileage_km: int = Field(ge=0)
+    fuel_type: str | None = None
+    transmission: str | None = None
+    drivetrain: str | None = None
+    body_type: str | None = None
+    color: str | None = None
+    price_eur: float = Field(gt=0)
+    currency: str = "EUR"
+    vat_deductible: bool = False
+    damaged: bool = False
+    accident_history: str | None = None
+    service_history: str | None = None
+    description: str | None = None
+    image_urls: list[str] = Field(default_factory=list)
+
+
+class ListingCreate(ListingBase):
+    pass
+
+
+class ListingUpdate(BaseModel):
+    listing_url: str | None = None
+    seller_type: str | None = None
+    variant: str | None = None
+    trim: str | None = None
+    mileage_km: int | None = Field(default=None, ge=0)
+    fuel_type: str | None = None
+    transmission: str | None = None
+    drivetrain: str | None = None
+    body_type: str | None = None
+    color: str | None = None
+    price_eur: float | None = Field(default=None, gt=0)
+    vat_deductible: bool | None = None
+    damaged: bool | None = None
+    accident_history: str | None = None
+    service_history: str | None = None
+    description: str | None = None
+    image_urls: list[str] | None = None
 
 
 class ListingRead(BaseModel):
@@ -28,6 +79,42 @@ class ListingRead(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ComparableCreate(BaseModel):
+    source: str = "manual"
+    listing_url: str | None = None
+    brand: str
+    model: str
+    variant: str | None = None
+    year: int = Field(ge=1900, le=2100)
+    mileage_km: int | None = Field(default=None, ge=0)
+    fuel_type: str | None = None
+    transmission: str | None = None
+    trim: str | None = None
+    price_sek: float = Field(gt=0)
+    location: str | None = None
+    seller_type: str | None = None
+    listing_age_days: int | None = Field(default=None, ge=0)
+
+
+class ComparableRead(ComparableCreate):
+    id: int
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DealCalculateRequest(BaseModel):
+    listing_id: int
+    estimated_swedish_price_sek: float = Field(gt=0)
+    desired_profit_sek: float | None = Field(default=None, ge=0)
+    transport_cost_sek: float | None = Field(default=None, ge=0)
+    registration_cost_sek: float | None = Field(default=None, ge=0)
+    inspection_cost_sek: float | None = Field(default=None, ge=0)
+    repair_buffer_sek: float | None = Field(default=None, ge=0)
+    tax_cost_sek: float | None = Field(default=None, ge=0)
+    other_costs_sek: float | None = Field(default=None, ge=0)
 
 
 class DealOpportunityRead(BaseModel):

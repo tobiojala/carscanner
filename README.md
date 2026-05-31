@@ -137,6 +137,22 @@ names.
 - Scraping is intentionally out of scope for Phase 2; all dashboard
   opportunities are seeded mock data.
 
+## Manual input workflow
+
+The dashboard includes a Phase 2 manual listing form. Submitting it creates a
+German listing with `POST /api/listings`, then calculates and stores a scored
+deal opportunity with `POST /api/deals/calculate`. Supporting endpoints are now
+available for listing CRUD and Swedish comparable input:
+
+- `GET /api/listings`
+- `POST /api/listings`
+- `GET /api/listings/{id}`
+- `PATCH /api/listings/{id}`
+- `DELETE /api/listings/{id}`
+- `GET /api/comparables`
+- `POST /api/comparables`
+- `POST /api/deals/calculate`
+
 ## Phase 2 utilities
 
 - Profit calculation lives in `backend/app/scoring/profit.py`.
