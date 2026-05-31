@@ -32,6 +32,20 @@ Start the full stack:
 docker compose up --build
 ```
 
+If another app is already using `localhost:3000`, run the frontend on a
+different host port, for example:
+
+```bash
+FRONTEND_PORT=3001 docker compose up --build
+```
+
+Then open http://localhost:3001. You can also move the backend or Postgres host
+ports if needed:
+
+```bash
+FRONTEND_PORT=3001 BACKEND_PORT=8001 POSTGRES_PORT=5433 docker compose up --build
+```
+
 Then open:
 
 - Frontend dashboard: http://localhost:3000
@@ -61,8 +75,9 @@ docker compose down -v
 
 ## Troubleshooting localhost
 
-If http://localhost:3000 does not load after pulling new Phase 2 changes, rebuild
-the containers first:
+If http://localhost:3000 does not load after pulling new Phase 2 changes, first
+check whether another app is using port 3000. If so, use `FRONTEND_PORT=3001`
+and open http://localhost:3001. Otherwise, rebuild the containers:
 
 ```bash
 docker compose up --build
@@ -82,6 +97,12 @@ Useful checks while the stack is running:
 docker compose ps
 docker compose logs frontend
 docker compose logs backend
+```
+
+On macOS or Linux, this can help identify a port conflict:
+
+```bash
+lsof -i :3000
 ```
 
 The frontend now starts even if the backend is still becoming healthy, so
