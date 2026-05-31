@@ -49,10 +49,25 @@ Reset the database volume and reseed on next startup:
 docker compose down -v
 ```
 
+
+## Database migrations
+
+Docker Compose runs Alembic migrations before the backend starts. For local
+backend-only development, run migrations from the backend directory after
+installing `backend/requirements.txt`:
+
+```bash
+cd backend
+alembic upgrade head
+```
+
+The initial migration creates `car_listings`, `swedish_comparables`, `deals`,
+`model_research`, `cost_assumptions`, and `alerts`.
+
 ## Development notes
 
-- The backend creates the current schema on startup and inserts seed listings if
-  the database is empty.
+- Docker Compose applies Alembic migrations before the backend starts. The
+  backend inserts idempotent seed data when tables are empty.
 - The frontend reads server-side `API_BASE_URL` first, then
   `NEXT_PUBLIC_API_BASE_URL`, and defaults to `http://localhost:8000`. Docker
   Compose sets `API_BASE_URL` to the backend service hostname.

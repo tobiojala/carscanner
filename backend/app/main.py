@@ -1,20 +1,17 @@
-from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router as api_router
 from app.core.config import get_settings
-from app.db.base import Base
-from app.db.session import SessionLocal, engine
-from app import models  # noqa: F401
+from app.db.session import SessionLocal
 from app.seeds import seed_database
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    Base.metadata.create_all(bind=engine)
     with SessionLocal() as db:
         seed_database(db)
     yield
