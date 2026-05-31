@@ -8,6 +8,7 @@ from app.models import Alert, CarListing, CostAssumption, Deal, ModelResearch, S
 from app.scoring import DealScoringInput, ProfitCalculationInput, calculate_profit, score_deal
 from app.seeds.model_research import (
     build_bmw_320d_touring_seed,
+    build_vw_golf_variant_mk7_seed,
     build_vw_passat_gte_variant_seed,
 )
 
@@ -175,7 +176,6 @@ SEED_COMPARABLES = [
 ]
 
 MODEL_RESEARCH = [
-    ("VW", "Golf", "GTD", "2014-2020", ["GTD", "Variant", "DSG"], ["base diesel"], "Check DSG service history.", 86, 82, 88, "High liquidity but pricing varies by trim.", Decimal("14500"), Decimal("17500"), Decimal("210000"), Decimal("240000")),
     ("Audi", "A4 Avant", "B9", "2014-2020", ["S-Line", "quattro"], ["manual base trim"], "Check gearbox and quattro service history.", 82, 80, 78, "Strong resale but private sellers increase risk.", Decimal("18500"), Decimal("22000"), Decimal("275000"), Decimal("315000")),
     ("Volvo", "V60", "D4", "2015-2020", ["R-Design", "Inscription"], ["fleet base cars"], "Confirm import equipment and service records.", 88, 72, 84, "Swedish brand trust supports resale.", Decimal("22000"), Decimal("25000"), Decimal("315000"), Decimal("355000")),
 ]
@@ -281,6 +281,7 @@ def _seed_model_research(db: Session) -> None:
     ]
     research_objects.extend([
         build_bmw_320d_touring_seed(),
+        build_vw_golf_variant_mk7_seed(),
         build_vw_passat_gte_variant_seed(),
     ])
 
