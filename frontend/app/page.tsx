@@ -2,16 +2,41 @@ import { getDashboardSummary, getOpportunities } from "../lib/api";
 
 export const dynamic = "force-dynamic";
 
-const currencyFormatter = new Intl.NumberFormat("en-US", {
+const sekFormatter = new Intl.NumberFormat("sv-SE", {
   style: "currency",
-  currency: "USD",
+  currency: "SEK",
   maximumFractionDigits: 0
 });
 
-const numberFormatter = new Intl.NumberFormat("en-US");
+const eurFormatter = new Intl.NumberFormat("de-DE", {
+  style: "currency",
+  currency: "EUR",
+  maximumFractionDigits: 0
+});
 
-function formatCurrency(value: number) {
-  return currencyFormatter.format(value);
+const numberFormatter = new Intl.NumberFormat("sv-SE");
+
+function formatSek(value: number) {
+  return sekFormatter.format(value);
+}
+
+function formatEur(value: number) {
+  return eurFormatter.format(value);
+}
+
+function scoreClass(score: number, inverted = false) {
+  const positive = inverted ? score <= 35 : score >= 75;
+  const warning = inverted ? score <= 55 : score >= 55;
+
+  if (positive) {
+    return "badge positive-badge";
+  }
+
+  if (warning) {
+    return "badge warning-badge";
+  }
+
+  return "badge danger-badge";
 }
 
 async function loadDashboardData() {
@@ -35,16 +60,16 @@ export default async function DashboardPage() {
       <main className="page">
         <section className="hero">
           <div>
-            <p className="eyebrow">Local dashboard</p>
+            <p className="eyebrow">Phase 2 local MVP</p>
             <h1>Car Arbitrage Scanner</h1>
             <p className="subtitle">
               Start the stack with <code>docker compose up --build</code> to
-              load the API, PostgreSQL, and seed data.
+              load PostgreSQL, FastAPI, Alembic migrations, and mock data.
             </p>
           </div>
         </section>
         <div className="error">
-          Unable to reach the backend API.{" "}
+          Unable to reach the backend API. {" "}
           {error instanceof Error ? error.message : "Unknown error"}
         </div>
       </main>
@@ -55,47 +80,67 @@ export default async function DashboardPage() {
     <main className="page">
       <section className="hero">
         <div>
-          <p className="eyebrow">Local dashboard</p>
+          <p className="eyebrow">Germany to Sweden mock scanner</p>
           <h1>Car Arbitrage Scanner</h1>
           <p className="subtitle">
-            Seeded opportunities show how the app will track price spreads
-            between source and target markets. Scraping can be added behind the
-            backend service layer later.
+            Phase 2 uses seeded mobile.de and AutoScout24-style listings for VW
+            Golf, VW Passat GTE, BMW 320d Touring, Audi A4 Avant, and Volvo V60.
+            Scraping is intentionally not implemented yet.
           </p>
         </div>
         <aside className="status-card">
-          <span>Backend API</span>
-          <strong>Connected</strong>
+          <span>Local stack</span>
+          <strong>API + Postgres ready</strong>
         </aside>
       </section>
 
       <section className="metrics" aria-label="Dashboard summary">
         <article className="metric-card">
-          <p className="metric-label">Seed listings</p>
-          <p className="metric-value">{summary.total_listings}</p>
+          <p className="metric-label">Cars scanned today</p>
+          <p className="metric-value">{summary.cars_scanned_today}</p>
         </article>
         <article className="metric-card">
-          <p className="metric-label">Average spread</p>
+          <p className="metric-label">Active opportunities</p>
+          <p className="metric-value">{summary.active_opportunities}</p>
+        </article>
+        <article className="metric-card">
+          <p className="metric-label">Avg expected profit</p>
           <p className="metric-value">
-            {formatCurrency(summary.average_spread)}
+            {formatSek(summary.average_expected_profit_sek)}
           </p>
         </article>
         <article className="metric-card">
-          <p className="metric-label">Best spread</p>
-          <p className="metric-value">{formatCurrency(summary.best_spread)}</p>
+          <p className="metric-label">Best model this week</p>
+          <p className="metric-value metric-text">
+            {summary.best_model_this_week ?? "No data"}
+          </p>
+        </article>
+        <article className="metric-card">
+          <p className="metric-label">High-confidence deals</p>
+          <p className="metric-value">{summary.high_confidence_deals}</p>
+        </article>
+        <article className="metric-card">
+          <p className="metric-label">Best opportunity</p>
+          <p className="metric-value metric-text">
+            {summary.best_opportunity
+              ? `${summary.best_opportunity.brand} ${summary.best_opportunity.model}`
+              : "No data"}
+          </p>
         </article>
       </section>
 
       <section className="table-card">
         <div className="table-header">
           <div>
-            <h2>Seeded opportunities</h2>
-            <p>Initial PostgreSQL data loaded by the FastAPI service.</p>
+            <h2>Mock deal opportunities</h2>
+            <p>
+              Seeded Phase 2 deals with conservative landed-cost calculation and
+              deterministic scoring.
+            </p>
           </div>
-          {summary.best_listing ? (
+          {summary.best_opportunity ? (
             <p className="positive">
-              Best: {summary.best_listing.year} {summary.best_listing.make}{" "}
-              {summary.best_listing.model}
+              Top profit: {formatSek(summary.best_opportunity.expected_profit_sek)}
             </p>
           ) : null}
         </div>
@@ -104,31 +149,60 @@ export default async function DashboardPage() {
           <thead>
             <tr>
               <th>Vehicle</th>
-              <th>Route</th>
-              <th>Mileage</th>
-              <th>Ask</th>
-              <th>Market</th>
-              <th>Spread</th>
+              <th>Source</th>
+              <th>German price</th>
+              <th>Swedish estimate</th>
+              <th>Landed cost</th>
+              <th>Profit</th>
+              <th>Scores</th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody>
-            {opportunities.map((listing) => (
-              <tr key={listing.id}>
+            {opportunities.map((opportunity) => (
+              <tr key={opportunity.id}>
                 <td>
                   <div className="vehicle">
-                    {listing.year} {listing.make} {listing.model}
+                    {opportunity.year} {opportunity.brand} {opportunity.model}
                   </div>
-                  <div className="muted">{listing.trim ?? "Base trim"}</div>
+                  <div className="muted">
+                    {opportunity.trim ?? opportunity.variant ?? "Unknown trim"} · {" "}
+                    {numberFormatter.format(opportunity.mileage_km)} km
+                  </div>
                 </td>
                 <td>
-                  <div>{listing.source_market}</div>
-                  <div className="muted">to {listing.target_market}</div>
+                  <div>{opportunity.source}</div>
+                  <div className="muted">
+                    {opportunity.seller_country} · {opportunity.seller_type}
+                  </div>
                 </td>
-                <td>{numberFormatter.format(listing.mileage)}</td>
-                <td>{formatCurrency(listing.asking_price)}</td>
-                <td>{formatCurrency(listing.estimated_market_price)}</td>
-                <td className="positive">
-                  {formatCurrency(listing.estimated_spread)}
+                <td>{formatEur(opportunity.price_eur)}</td>
+                <td>{formatSek(opportunity.estimated_swedish_price_sek)}</td>
+                <td>{formatSek(opportunity.total_landed_cost_sek)}</td>
+                <td>
+                  <div className="positive">
+                    {formatSek(opportunity.expected_profit_sek)}
+                  </div>
+                  <div className="muted">{opportunity.margin_percent}% margin</div>
+                </td>
+                <td>
+                  <div className="badge-row">
+                    <span className="badge grade-badge">
+                      {opportunity.deal_grade}
+                    </span>
+                    <span className={scoreClass(opportunity.confidence_score)}>
+                      C {opportunity.confidence_score}
+                    </span>
+                    <span className={scoreClass(opportunity.risk_score, true)}>
+                      R {opportunity.risk_score}
+                    </span>
+                  </div>
+                </td>
+                <td>
+                  <span className="badge neutral-badge">{opportunity.status}</span>
+                  {opportunity.risk_flags.length > 0 ? (
+                    <div className="muted">{opportunity.risk_flags.join(", ")}</div>
+                  ) : null}
                 </td>
               </tr>
             ))}

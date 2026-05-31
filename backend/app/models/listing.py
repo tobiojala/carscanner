@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint, func, text
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint, func, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -30,38 +30,39 @@ class CarListing(TimestampMixin, Base):
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    source: Mapped[str] = mapped_column(String(80), nullable=False, default="seed")
-    source_listing_id: Mapped[str | None] = mapped_column(String(120), nullable=True)
-    source_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    vin: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
+    source: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    source_listing_id: Mapped[str] = mapped_column(String(120), nullable=False)
+    listing_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    seller_country: Mapped[str] = mapped_column(String(2), nullable=False, default="DE", index=True)
+    seller_type: Mapped[str] = mapped_column(String(40), nullable=False, default="dealer", index=True)
 
-    year: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
-    make: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    brand: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
     model: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
+    variant: Mapped[str | None] = mapped_column(String(120), nullable=True)
     trim: Mapped[str | None] = mapped_column(String(120), nullable=True)
-    body_style: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    year: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    first_registration_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    mileage_km: Mapped[int] = mapped_column(Integer, nullable=False)
     fuel_type: Mapped[str | None] = mapped_column(String(80), nullable=True)
     transmission: Mapped[str | None] = mapped_column(String(80), nullable=True)
     drivetrain: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    body_type: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    color: Mapped[str | None] = mapped_column(String(80), nullable=True)
 
-    mileage: Mapped[int] = mapped_column(Integer, nullable=False)
-    exterior_color: Mapped[str | None] = mapped_column(String(80), nullable=True)
-    location_city: Mapped[str | None] = mapped_column(String(120), nullable=True)
-    location_country: Mapped[str] = mapped_column(String(2), nullable=False, default="US")
-    source_market: Mapped[str] = mapped_column(String(80), nullable=False)
-    target_market: Mapped[str] = mapped_column(String(80), nullable=False)
-
-    asking_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
-    currency: Mapped[str] = mapped_column(String(3), nullable=False, default="USD")
-    estimated_market_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
-
-    status: Mapped[str] = mapped_column(String(40), nullable=False, default="candidate", index=True)
-    first_seen_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
+    price_eur: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False, default="EUR")
+    vat_deductible: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    damaged: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
+    accident_history: Mapped[str | None] = mapped_column(Text, nullable=True)
+    service_history: Mapped[str | None] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    image_urls: Mapped[list[str]] = mapped_column(
+        JSONB,
         nullable=False,
+        default=list,
+        server_default=text("'[]'::jsonb"),
     )
-    last_seen_at: Mapped[datetime] = mapped_column(
+    scraped_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
@@ -73,61 +74,34 @@ class CarListing(TimestampMixin, Base):
         server_default=text("'{}'::jsonb"),
     )
 
-    swedish_comparables: Mapped[list["SwedishComparable"]] = relationship(
-        back_populates="car_listing",
-        passive_deletes=True,
-    )
     deals: Mapped[list["Deal"]] = relationship(
-        back_populates="car_listing",
+        back_populates="foreign_listing",
         cascade="all, delete-orphan",
     )
-    alerts: Mapped[list["Alert"]] = relationship(
-        back_populates="car_listing",
-        passive_deletes=True,
-    )
 
 
-class SwedishComparable(TimestampMixin, Base):
+class SwedishComparable(Base):
     __tablename__ = "swedish_comparables"
-    __table_args__ = (
-        UniqueConstraint("source", "source_listing_id", name="uq_swedish_comparable_source_id"),
-    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    car_listing_id: Mapped[int | None] = mapped_column(
-        ForeignKey("car_listings.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True,
-    )
-    source: Mapped[str] = mapped_column(String(80), nullable=False, default="seed")
-    source_listing_id: Mapped[str | None] = mapped_column(String(120), nullable=True)
-    source_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-
-    year: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
-    make: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    source: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    listing_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    brand: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
     model: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
-    trim: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    variant: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    year: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     mileage_km: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    asking_price_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    fuel_type: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    transmission: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    trim: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    price_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     location: Mapped[str | None] = mapped_column(String(160), nullable=True)
-    dealer_name: Mapped[str | None] = mapped_column(String(160), nullable=True)
-    observed_at: Mapped[datetime] = mapped_column(
+    seller_type: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    listing_age_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
-    )
-    confidence_score: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
-    raw_data: Mapped[dict[str, Any]] = mapped_column(
-        JSONB,
-        nullable=False,
-        default=dict,
-        server_default=text("'{}'::jsonb"),
-    )
-
-    car_listing: Mapped[CarListing | None] = relationship(back_populates="swedish_comparables")
-    deals: Mapped[list["Deal"]] = relationship(
-        back_populates="swedish_comparable",
-        passive_deletes=True,
     )
 
 
@@ -135,137 +109,115 @@ class Deal(TimestampMixin, Base):
     __tablename__ = "deals"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    car_listing_id: Mapped[int] = mapped_column(
+    foreign_listing_id: Mapped[int] = mapped_column(
         ForeignKey("car_listings.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
-    swedish_comparable_id: Mapped[int | None] = mapped_column(
-        ForeignKey("swedish_comparables.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True,
-    )
-    status: Mapped[str] = mapped_column(String(40), nullable=False, default="watching", index=True)
-
-    acquisition_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
-    acquisition_currency: Mapped[str] = mapped_column(String(3), nullable=False, default="USD")
-    estimated_sale_price_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
-    estimated_total_cost_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
-    estimated_profit_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
-    margin_percent: Mapped[Decimal | None] = mapped_column(Numeric(6, 2), nullable=True)
-
-    transport_cost_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
-    import_cost_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
-    inspection_cost_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
-    repair_budget_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
-    platform_fee_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
-
+    estimated_swedish_price_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    purchase_price_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    transport_cost_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    registration_cost_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    inspection_cost_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    repair_buffer_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    tax_cost_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    other_costs_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    total_landed_cost_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    expected_profit_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, index=True)
+    margin_percent: Mapped[Decimal] = mapped_column(Numeric(6, 2), nullable=False)
+    confidence_score: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    risk_score: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    liquidity_score: Mapped[int] = mapped_column(Integer, nullable=False)
+    deal_grade: Mapped[str] = mapped_column(String(4), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(40), nullable=False, default="new", index=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
+    risk_flags: Mapped[list[str]] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=list,
+        server_default=text("'[]'::jsonb"),
+    )
 
-    car_listing: Mapped[CarListing] = relationship(back_populates="deals")
-    swedish_comparable: Mapped[SwedishComparable | None] = relationship(back_populates="deals")
+    foreign_listing: Mapped[CarListing] = relationship(back_populates="deals")
     alerts: Mapped[list["Alert"]] = relationship(
         back_populates="deal",
-        passive_deletes=True,
+        cascade="all, delete-orphan",
     )
 
 
 class ModelResearch(TimestampMixin, Base):
     __tablename__ = "model_research"
     __table_args__ = (
-        UniqueConstraint(
-            "make",
-            "model",
-            "trim",
-            "model_year_start",
-            "model_year_end",
-            "market",
-            name="uq_model_research_vehicle_market",
-        ),
+        UniqueConstraint("brand", "model", "variant", name="uq_model_research_vehicle"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    make: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    brand: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
     model: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
-    trim: Mapped[str | None] = mapped_column(String(120), nullable=True)
-    model_year_start: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    model_year_end: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    market: Mapped[str] = mapped_column(String(80), nullable=False, default="SE", index=True)
-
-    average_price_sek: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
-    median_price_sek: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
-    sample_size: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    demand_score: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
-    liquidity_score: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
-    search_terms: Mapped[dict[str, Any]] = mapped_column(
+    variant: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    good_years: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    strong_trims: Mapped[list[str]] = mapped_column(
         JSONB,
         nullable=False,
-        default=dict,
-        server_default=text("'{}'::jsonb"),
+        default=list,
+        server_default=text("'[]'::jsonb"),
     )
-    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    weak_trims: Mapped[list[str]] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=list,
+        server_default=text("'[]'::jsonb"),
+    )
     common_issues: Mapped[str | None] = mapped_column(Text, nullable=True)
+    swedish_demand_score: Mapped[int] = mapped_column(Integer, nullable=False)
+    german_supply_score: Mapped[int] = mapped_column(Integer, nullable=False)
+    liquidity_score: Mapped[int] = mapped_column(Integer, nullable=False)
+    risk_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    target_buy_price_min: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    target_buy_price_max: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    target_sell_price_min: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    target_sell_price_max: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
 
 
-class CostAssumption(TimestampMixin, Base):
+class CostAssumption(Base):
     __tablename__ = "cost_assumptions"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(120), nullable=False, unique=True)
-    origin_market: Mapped[str] = mapped_column(String(80), nullable=False)
-    destination_market: Mapped[str] = mapped_column(String(80), nullable=False, default="SE")
-    currency: Mapped[str] = mapped_column(String(3), nullable=False, default="SEK")
-
-    exchange_rate_to_sek: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False)
-    transport_cost: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
-    import_duty_rate: Mapped[Decimal] = mapped_column(Numeric(6, 4), nullable=False, default=0)
-    vat_rate: Mapped[Decimal] = mapped_column(Numeric(6, 4), nullable=False, default=0)
-    registration_cost: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
-    inspection_cost: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
-    platform_fee: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
-    repair_buffer_percent: Mapped[Decimal] = mapped_column(Numeric(6, 4), nullable=False, default=0)
-
-    is_active: Mapped[bool] = mapped_column(nullable=False, default=True, index=True)
-    effective_from: Mapped[datetime] = mapped_column(
+    eur_to_sek_rate: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False)
+    default_transport_cost_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    default_registration_cost_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    default_inspection_cost_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    default_repair_buffer_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    default_tax_cost_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    default_other_costs_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    minimum_profit_threshold_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    minimum_confidence_score: Mapped[int] = mapped_column(Integer, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
+        onupdate=func.now(),
         nullable=False,
     )
-    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
-class Alert(TimestampMixin, Base):
+class Alert(Base):
     __tablename__ = "alerts"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    car_listing_id: Mapped[int | None] = mapped_column(
-        ForeignKey("car_listings.id", ondelete="CASCADE"),
-        nullable=True,
-        index=True,
-    )
     deal_id: Mapped[int | None] = mapped_column(
         ForeignKey("deals.id", ondelete="CASCADE"),
         nullable=True,
         index=True,
     )
     alert_type: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
-    severity: Mapped[str] = mapped_column(String(40), nullable=False, default="info", index=True)
-    title: Mapped[str] = mapped_column(String(200), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
-    is_read: Mapped[bool] = mapped_column(nullable=False, default=False, index=True)
-    triggered_at: Mapped[datetime] = mapped_column(
+    sent: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
     )
-    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    metadata_json: Mapped[dict[str, Any]] = mapped_column(
-        "metadata",
-        JSONB,
-        nullable=False,
-        default=dict,
-        server_default=text("'{}'::jsonb"),
-    )
 
-    car_listing: Mapped[CarListing | None] = relationship(back_populates="alerts")
     deal: Mapped[Deal | None] = relationship(back_populates="alerts")

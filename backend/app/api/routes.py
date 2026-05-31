@@ -2,8 +2,12 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.schemas import DashboardSummary, ListingRead
-from app.services.listing_service import get_dashboard_summary, list_opportunities
+from app.schemas import DashboardSummary, DealOpportunityRead, ListingRead
+from app.services.listing_service import (
+    get_dashboard_summary,
+    list_listings,
+    list_opportunities,
+)
 
 router = APIRouter()
 
@@ -15,11 +19,11 @@ def health_check() -> dict[str, str]:
 
 @router.get("/listings", response_model=list[ListingRead])
 def get_listings(db: Session = Depends(get_db)) -> list[ListingRead]:
-    return list_opportunities(db)
+    return list_listings(db)
 
 
-@router.get("/opportunities", response_model=list[ListingRead])
-def get_opportunities(db: Session = Depends(get_db)) -> list[ListingRead]:
+@router.get("/opportunities", response_model=list[DealOpportunityRead])
+def get_opportunities(db: Session = Depends(get_db)) -> list[DealOpportunityRead]:
     return list_opportunities(db)
 
 

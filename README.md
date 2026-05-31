@@ -5,7 +5,8 @@ scope is a clean application foundation: Next.js frontend, FastAPI backend,
 PostgreSQL via Docker Compose, database connectivity, seed data, and a simple
 dashboard.
 
-Scraping is intentionally not implemented yet.
+Scraping is intentionally not implemented yet. Phase 2 is driven by
+`docs/car_arbitrage_ai_prompt_pack.md`.
 
 ## Project layout
 
@@ -37,6 +38,7 @@ Then open:
 - Backend API docs: http://localhost:8000/docs
 - Backend health: http://localhost:8000/health
 - Mock opportunities API: http://localhost:8000/api/opportunities
+- Raw German listings API: http://localhost:8000/api/listings
 
 PostgreSQL is exposed at `localhost:5432` with:
 
@@ -69,13 +71,14 @@ alembic upgrade head
 ```
 
 The initial migration creates `car_listings`, `swedish_comparables`, `deals`,
-`model_research`, `cost_assumptions`, and `alerts`.
+`model_research`, `cost_assumptions`, and `alerts` using the prompt pack field
+names.
 
 ## Development notes
 
 - Docker Compose applies Alembic migrations before the backend starts. The
-  backend inserts idempotent seed data for listings, comparables, deals, model
-  research, cost assumptions, alerts, and dashboard mock opportunities.
+  backend inserts idempotent seed data for the five starter models: VW Golf, VW
+  Passat GTE, BMW 320d Touring, Audi A4 Avant, and Volvo V60.
 - The frontend reads server-side `API_BASE_URL` first, then
   `NEXT_PUBLIC_API_BASE_URL`, and defaults to `http://localhost:8000`. Docker
   Compose sets `API_BASE_URL` to the backend service hostname.
@@ -84,3 +87,9 @@ The initial migration creates `car_listings`, `swedish_comparables`, `deals`,
   the dashboard or database bootstrap code.
 - Scraping is intentionally out of scope for Phase 2; all dashboard
   opportunities are seeded mock data.
+
+## Phase 2 utilities
+
+- Profit calculation lives in `backend/app/scoring/profit.py`.
+- Deal scoring lives in `backend/app/scoring/deal_scoring.py`.
+- Unit tests for deterministic scoring live in `backend/tests/test_scoring.py`.

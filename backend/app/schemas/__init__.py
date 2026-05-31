@@ -1,3 +1,3 @@
-from app.schemas.listing import DashboardSummary, ListingRead
+from app.schemas.listing import DashboardSummary, DealOpportunityRead, ListingRead
 
-__all__ = ["DashboardSummary", "ListingRead"]
+__all__ = ["DashboardSummary", "DealOpportunityRead", "ListingRead"]

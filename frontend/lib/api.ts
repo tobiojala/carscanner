@@ -5,24 +5,42 @@ const API_BASE_URL =
 
 export type Opportunity = {
   id: number;
-  year: number;
-  make: string;
+  listing_id: number;
+  source: string;
+  listing_url: string | null;
+  seller_country: string;
+  seller_type: string;
+  brand: string;
   model: string;
+  variant: string | null;
   trim: string | null;
-  source_market: string;
-  target_market: string;
-  asking_price: number;
-  estimated_market_price: number;
-  mileage: number;
-  estimated_spread: number;
+  year: number;
+  mileage_km: number;
+  fuel_type: string | null;
+  transmission: string | null;
+  price_eur: number;
+  purchase_price_sek: number;
+  estimated_swedish_price_sek: number;
+  total_landed_cost_sek: number;
+  expected_profit_sek: number;
+  margin_percent: number;
+  confidence_score: number;
+  risk_score: number;
+  liquidity_score: number;
+  deal_grade: string;
+  status: string;
+  risk_flags: string[];
+  explanation: string | null;
   created_at: string;
 };
 
 export type DashboardSummary = {
-  total_listings: number;
-  average_spread: number;
-  best_spread: number;
-  best_listing: Opportunity | null;
+  cars_scanned_today: number;
+  active_opportunities: number;
+  average_expected_profit_sek: number;
+  best_model_this_week: string | null;
+  high_confidence_deals: number;
+  best_opportunity: Opportunity | null;
 };
 
 async function getJson<T>(path: string): Promise<T> {
