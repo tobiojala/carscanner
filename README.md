@@ -19,6 +19,12 @@ Scraping is intentionally not implemented yet.
 
 ## Run locally
 
+Optional: copy the local environment template if you want to override defaults:
+
+```bash
+cp .env.example .env
+```
+
 Start the full stack:
 
 ```bash
@@ -30,6 +36,7 @@ Then open:
 - Frontend dashboard: http://localhost:3000
 - Backend API docs: http://localhost:8000/docs
 - Backend health: http://localhost:8000/health
+- Mock opportunities API: http://localhost:8000/api/opportunities
 
 PostgreSQL is exposed at `localhost:5432` with:
 
@@ -67,10 +74,13 @@ The initial migration creates `car_listings`, `swedish_comparables`, `deals`,
 ## Development notes
 
 - Docker Compose applies Alembic migrations before the backend starts. The
-  backend inserts idempotent seed data when tables are empty.
+  backend inserts idempotent seed data for listings, comparables, deals, model
+  research, cost assumptions, alerts, and dashboard mock opportunities.
 - The frontend reads server-side `API_BASE_URL` first, then
   `NEXT_PUBLIC_API_BASE_URL`, and defaults to `http://localhost:8000`. Docker
   Compose sets `API_BASE_URL` to the backend service hostname.
 - The architecture keeps API routing, settings, persistence, schemas, and
   business logic separated so scraping can be added later without coupling it to
   the dashboard or database bootstrap code.
+- Scraping is intentionally out of scope for Phase 2; all dashboard
+  opportunities are seeded mock data.

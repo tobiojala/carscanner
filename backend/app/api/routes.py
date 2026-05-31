@@ -18,6 +18,11 @@ def get_listings(db: Session = Depends(get_db)) -> list[ListingRead]:
     return list_opportunities(db)
 
 
+@router.get("/opportunities", response_model=list[ListingRead])
+def get_opportunities(db: Session = Depends(get_db)) -> list[ListingRead]:
+    return list_opportunities(db)
+
+
 @router.get("/dashboard", response_model=DashboardSummary)
 def get_dashboard(db: Session = Depends(get_db)) -> DashboardSummary:
     return get_dashboard_summary(db)

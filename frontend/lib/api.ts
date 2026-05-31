@@ -3,7 +3,7 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   "http://localhost:8000";
 
-export type Listing = {
+export type Opportunity = {
   id: number;
   year: number;
   make: string;
@@ -22,7 +22,7 @@ export type DashboardSummary = {
   total_listings: number;
   average_spread: number;
   best_spread: number;
-  best_listing: Listing | null;
+  best_listing: Opportunity | null;
 };
 
 async function getJson<T>(path: string): Promise<T> {
@@ -41,6 +41,6 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   return getJson<DashboardSummary>("/api/dashboard");
 }
 
-export async function getListings(): Promise<Listing[]> {
-  return getJson<Listing[]>("/api/listings");
+export async function getOpportunities(): Promise<Opportunity[]> {
+  return getJson<Opportunity[]>("/api/opportunities");
 }

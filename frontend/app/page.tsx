@@ -1,4 +1,4 @@
-import { getDashboardSummary, getListings } from "../lib/api";
+import { getDashboardSummary, getOpportunities } from "../lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -16,19 +16,19 @@ function formatCurrency(value: number) {
 
 async function loadDashboardData() {
   try {
-    const [summary, listings] = await Promise.all([
+    const [summary, opportunities] = await Promise.all([
       getDashboardSummary(),
-      getListings()
+      getOpportunities()
     ]);
 
-    return { summary, listings, error: null };
+    return { summary, opportunities, error: null };
   } catch (error) {
-    return { summary: null, listings: [], error };
+    return { summary: null, opportunities: [], error };
   }
 }
 
 export default async function DashboardPage() {
-  const { summary, listings, error } = await loadDashboardData();
+  const { summary, opportunities, error } = await loadDashboardData();
 
   if (!summary) {
     return (
@@ -112,7 +112,7 @@ export default async function DashboardPage() {
             </tr>
           </thead>
           <tbody>
-            {listings.map((listing) => (
+            {opportunities.map((listing) => (
               <tr key={listing.id}>
                 <td>
                   <div className="vehicle">

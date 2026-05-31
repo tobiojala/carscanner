@@ -3,15 +3,15 @@ services:
     image: postgres:16-alpine
     container_name: car-arbitrage-db
     environment:
-      POSTGRES_DB: car_arbitrage
-      POSTGRES_USER: car_user
-      POSTGRES_PASSWORD: car_password
+      POSTGRES_DB: ${POSTGRES_DB:-car_arbitrage}
+      POSTGRES_USER: ${POSTGRES_USER:-car_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-car_password}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U car_user -d car_arbitrage"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -21,31 +21,39 @@ services:
       context: ./backend
     container_name: car-arbitrage-backend
     environment:
-      DATABASE_URL: postgresql+psycopg://car_user:car_password@db:5432/car_arbitrage
-      BACKEND_CORS_ORIGINS: http://localhost:3000
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-car_user}:${POSTGRES_PASSWORD:-car_password}@db:5432/${POSTGRES_DB:-car_arbitrage}
+      BACKEND_CORS_ORIGINS: ${BACKEND_CORS_ORIGINS:-http://localhost:3000}
     ports:
       - "8000:8000"
     volumes:
       - ./backend/app:/app/app
+      - ./backend/alembic:/app/alembic
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   frontend:
     build:
-      context: ./frontend
+      context: .
+      dockerfile: frontend/Dockerfile
     container_name: car-arbitrage-frontend
     environment:
-      API_BASE_URL: http://backend:8000
-      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+      API_BASE_URL: ${API_BASE_URL:-http://backend:8000}
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
     ports:
       - "3000:3000"
     volumes:
-      - ./frontend/app:/app/app
-      - ./frontend/lib:/app/lib
-      - ./frontend/public:/app/public
+      - ./frontend/app:/app/frontend/app
+      - ./frontend/lib:/app/frontend/lib
+      - ./frontend/public:/app/frontend/public
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
 volumes:
   postgres_data:
