@@ -1,8 +1,18 @@
-import { API_BASE_URL, type Listing, type ListingCreate, type Opportunity } from "./api";
+import {
+  API_BASE_URL,
+  type CostSettings,
+  type Listing,
+  type ListingCreate,
+  type Opportunity
+} from "./api";
 
-async function postJson<T>(path: string, body: unknown): Promise<T> {
+async function requestJson<T>(
+  path: string,
+  method: "POST" | "PATCH",
+  body: unknown
+): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    method: "POST",
+    method,
     headers: {
       "Content-Type": "application/json"
     },
@@ -18,15 +28,30 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
 }
 
 export async function createListing(payload: ListingCreate): Promise<Listing> {
-  return postJson<Listing>("/api/listings", payload);
+  return requestJson<Listing>("/api/listings", "POST", payload);
 }
 
 export async function calculateDeal(
   listingId: number,
   estimatedSwedishPriceSek: number
 ): Promise<Opportunity> {
-  return postJson<Opportunity>("/api/deals/calculate", {
+  return requestJson<Opportunity>("/api/deals/calculate", "POST", {
     listing_id: listingId,
     estimated_swedish_price_sek: estimatedSwedishPriceSek
   });
+}
+
+export async function updateDealStatus(
+  dealId: number,
+  status: string
+): Promise<Opportunity> {
+  return requestJson<Opportunity>(`/api/deals/${dealId}/status`, "PATCH", {
+    status
+  });
+}
+
+export async function updateSettings(
+  payload: Partial<CostSettings>
+): Promise<CostSettings> {
+  return requestJson<CostSettings>("/api/settings", "PATCH", payload);
 }

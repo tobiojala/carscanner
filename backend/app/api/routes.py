@@ -5,6 +5,11 @@ from app.db.session import get_db
 from app.schemas import (
     ComparableCreate,
     ComparableRead,
+    ModelResearchUpdate,
+    ModelResearchRead,
+    DealStatusUpdate,
+    CostAssumptionUpdate,
+    CostAssumptionRead,
     DashboardSummary,
     DealCalculateRequest,
     DealDetailRead,
@@ -21,6 +26,11 @@ from app.services.listing_service import (
     get_dashboard_summary,
     get_deal_detail,
     get_listing,
+    update_settings,
+    update_model_research,
+    update_deal_status,
+    list_model_research,
+    get_settings,
     list_comparables,
     list_listings,
     list_opportunities,
@@ -83,8 +93,28 @@ def post_comparable(
 
 
 @router.get("/opportunities", response_model=list[DealOpportunityRead])
-def get_opportunities(db: Session = Depends(get_db)) -> list[DealOpportunityRead]:
-    return list_opportunities(db)
+def get_opportunities(
+    model: str | None = None,
+    min_profit_sek: float | None = None,
+    min_confidence: int | None = None,
+    source: str | None = None,
+    seller_type: str | None = None,
+    fuel_type: str | None = None,
+    transmission: str | None = None,
+    status_filter: str | None = None,
+    db: Session = Depends(get_db),
+) -> list[DealOpportunityRead]:
+    return list_opportunities(
+        db,
+        model=model,
+        min_profit_sek=min_profit_sek,
+        min_confidence=min_confidence,
+        source=source,
+        seller_type=seller_type,
+        fuel_type=fuel_type,
+        transmission=transmission,
+        status_filter=status_filter,
+    )
 
 
 @router.post("/deals/calculate", response_model=DealOpportunityRead)
@@ -101,6 +131,42 @@ def get_deal_detail_endpoint(
     db: Session = Depends(get_db),
 ) -> DealDetailRead:
     return get_deal_detail(db, deal_id)
+
+
+@router.patch("/deals/{deal_id}/status", response_model=DealOpportunityRead)
+def patch_deal_status(
+    deal_id: int,
+    payload: DealStatusUpdate,
+    db: Session = Depends(get_db),
+) -> DealOpportunityRead:
+    return update_deal_status(db, deal_id, payload)
+
+
+@router.get("/settings", response_model=CostAssumptionRead)
+def get_cost_settings(db: Session = Depends(get_db)) -> CostAssumptionRead:
+    return get_settings(db)
+
+
+@router.patch("/settings", response_model=CostAssumptionRead)
+def patch_cost_settings(
+    payload: CostAssumptionUpdate,
+    db: Session = Depends(get_db),
+) -> CostAssumptionRead:
+    return update_settings(db, payload)
+
+
+@router.get("/model-research", response_model=list[ModelResearchRead])
+def get_model_research(db: Session = Depends(get_db)) -> list[ModelResearchRead]:
+    return list_model_research(db)
+
+
+@router.patch("/model-research/{research_id}", response_model=ModelResearchRead)
+def patch_model_research(
+    research_id: int,
+    payload: ModelResearchUpdate,
+    db: Session = Depends(get_db),
+) -> ModelResearchRead:
+    return update_model_research(db, research_id, payload)
 
 
 @router.get("/dashboard", response_model=DashboardSummary)

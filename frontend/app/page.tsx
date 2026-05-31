@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AppNav } from "../components/app-nav";
 import { ManualListingForm } from "../components/manual-listing-form";
 import { getDashboardSummary, getOpportunities } from "../lib/api";
 
@@ -61,6 +62,7 @@ export default async function DashboardPage() {
   if (!summary) {
     return (
       <main className="page">
+        <AppNav />
         <section className="hero">
           <div>
             <p className="eyebrow">Phase 2 local MVP</p>
@@ -81,6 +83,7 @@ export default async function DashboardPage() {
 
   return (
     <main className="page">
+      <AppNav />
       <section className="hero">
         <div>
           <p className="eyebrow">Germany to Sweden mock scanner</p>

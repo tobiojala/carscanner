@@ -119,6 +119,52 @@ export type DealDetail = {
   notes: string | null;
 };
 
+export type CostSettings = {
+  id: number;
+  eur_to_sek_rate: number;
+  default_transport_cost_sek: number;
+  default_registration_cost_sek: number;
+  default_inspection_cost_sek: number;
+  default_repair_buffer_sek: number;
+  default_tax_cost_sek: number;
+  default_other_costs_sek: number;
+  minimum_profit_threshold_sek: number;
+  minimum_confidence_score: number;
+  updated_at: string;
+};
+
+export type ModelResearch = {
+  id: number;
+  brand: string;
+  model: string;
+  variant: string | null;
+  good_years: string | null;
+  strong_trims: string[];
+  weak_trims: string[];
+  common_issues: string | null;
+  swedish_demand_score: number;
+  german_supply_score: number;
+  liquidity_score: number;
+  risk_notes: string | null;
+  target_buy_price_min: number | null;
+  target_buy_price_max: number | null;
+  target_sell_price_min: number | null;
+  target_sell_price_max: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type OpportunityFilters = {
+  model?: string;
+  min_profit_sek?: string;
+  min_confidence?: string;
+  source?: string;
+  seller_type?: string;
+  fuel_type?: string;
+  transmission?: string;
+  status_filter?: string;
+};
+
 export type DashboardSummary = {
   cars_scanned_today: number;
   active_opportunities: number;
@@ -144,10 +190,27 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   return getJson<DashboardSummary>("/api/dashboard");
 }
 
-export async function getOpportunities(): Promise<Opportunity[]> {
-  return getJson<Opportunity[]>("/api/opportunities");
+export async function getOpportunities(
+  filters: OpportunityFilters = {}
+): Promise<Opportunity[]> {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) {
+      params.set(key, value);
+    }
+  });
+  const query = params.toString();
+  return getJson<Opportunity[]>(`/api/opportunities${query ? `?${query}` : ""}`);
 }
 
 export async function getDealDetail(dealId: number): Promise<DealDetail> {
   return getJson<DealDetail>(`/api/deals/${dealId}`);
+}
+
+export async function getSettings(): Promise<CostSettings> {
+  return getJson<CostSettings>("/api/settings");
+}
+
+export async function getModelResearch(): Promise<ModelResearch[]> {
+  return getJson<ModelResearch[]>("/api/model-research");
 }

@@ -167,6 +167,76 @@ class DealDetailRead(BaseModel):
     notes: str | None
 
 
+class DealStatusUpdate(BaseModel):
+    status: str
+
+
+class CostAssumptionRead(BaseModel):
+    id: int
+    eur_to_sek_rate: float
+    default_transport_cost_sek: float
+    default_registration_cost_sek: float
+    default_inspection_cost_sek: float
+    default_repair_buffer_sek: float
+    default_tax_cost_sek: float
+    default_other_costs_sek: float
+    minimum_profit_threshold_sek: float
+    minimum_confidence_score: int
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CostAssumptionUpdate(BaseModel):
+    eur_to_sek_rate: float | None = Field(default=None, gt=0)
+    default_transport_cost_sek: float | None = Field(default=None, ge=0)
+    default_registration_cost_sek: float | None = Field(default=None, ge=0)
+    default_inspection_cost_sek: float | None = Field(default=None, ge=0)
+    default_repair_buffer_sek: float | None = Field(default=None, ge=0)
+    default_tax_cost_sek: float | None = Field(default=None, ge=0)
+    default_other_costs_sek: float | None = Field(default=None, ge=0)
+    minimum_profit_threshold_sek: float | None = Field(default=None, ge=0)
+    minimum_confidence_score: int | None = Field(default=None, ge=0, le=100)
+
+
+class ModelResearchRead(BaseModel):
+    id: int
+    brand: str
+    model: str
+    variant: str | None
+    good_years: str | None
+    strong_trims: list[str]
+    weak_trims: list[str]
+    common_issues: str | None
+    swedish_demand_score: int
+    german_supply_score: int
+    liquidity_score: int
+    risk_notes: str | None
+    target_buy_price_min: float | None
+    target_buy_price_max: float | None
+    target_sell_price_min: float | None
+    target_sell_price_max: float | None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ModelResearchUpdate(BaseModel):
+    good_years: str | None = None
+    strong_trims: list[str] | None = None
+    weak_trims: list[str] | None = None
+    common_issues: str | None = None
+    swedish_demand_score: int | None = Field(default=None, ge=0, le=100)
+    german_supply_score: int | None = Field(default=None, ge=0, le=100)
+    liquidity_score: int | None = Field(default=None, ge=0, le=100)
+    risk_notes: str | None = None
+    target_buy_price_min: float | None = Field(default=None, ge=0)
+    target_buy_price_max: float | None = Field(default=None, ge=0)
+    target_sell_price_min: float | None = Field(default=None, ge=0)
+    target_sell_price_max: float | None = Field(default=None, ge=0)
+
+
 class DashboardSummary(BaseModel):
     cars_scanned_today: int
     active_opportunities: int

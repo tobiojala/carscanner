@@ -1,6 +1,11 @@
 from app.schemas.listing import (
     ComparableCreate,
     ComparableRead,
+    ModelResearchUpdate,
+    ModelResearchRead,
+    DealStatusUpdate,
+    CostAssumptionUpdate,
+    CostAssumptionRead,
     CostBreakdown,
     DashboardSummary,
     DealDetailRead,
@@ -14,6 +19,11 @@ from app.schemas.listing import (
 __all__ = [
     "ComparableCreate",
     "ComparableRead",
+    "ModelResearchUpdate",
+    "ModelResearchRead",
+    "DealStatusUpdate",
+    "CostAssumptionUpdate",
+    "CostAssumptionRead",
     "CostBreakdown",
     "DashboardSummary",
     "DealDetailRead",

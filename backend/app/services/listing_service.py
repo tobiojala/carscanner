@@ -11,6 +11,11 @@ from app.models import CarListing, CostAssumption, Deal, ModelResearch, SwedishC
 from app.schemas import (
     ComparableCreate,
     ComparableRead,
+    ModelResearchUpdate,
+    ModelResearchRead,
+    DealStatusUpdate,
+    CostAssumptionUpdate,
+    CostAssumptionRead,
     CostBreakdown,
     DashboardSummary,
     DealCalculateRequest,
@@ -21,6 +26,18 @@ from app.schemas import (
     ListingUpdate,
 )
 from app.scoring import DealScoringInput, ProfitCalculationInput, calculate_profit, score_deal
+
+ALLOWED_DEAL_STATUSES = {
+    "new",
+    "researching",
+    "contacted",
+    "negotiating",
+    "bought",
+    "imported",
+    "listed_in_sweden",
+    "sold",
+    "rejected",
+}
 
 
 def _money(value: object) -> float:
@@ -62,6 +79,14 @@ def _to_listing_read(listing: CarListing) -> ListingRead:
 
 def _to_comparable_read(comparable: SwedishComparable) -> ComparableRead:
     return ComparableRead.model_validate(comparable)
+
+
+def _to_settings_read(assumptions: CostAssumption) -> CostAssumptionRead:
+    return CostAssumptionRead.model_validate(assumptions)
+
+
+def _to_model_research_read(research: ModelResearch) -> ModelResearchRead:
+    return ModelResearchRead.model_validate(research)
 
 
 def _to_opportunity_read(deal: Deal) -> DealOpportunityRead:
@@ -363,13 +388,110 @@ def get_deal_detail(db: Session, deal_id: int) -> DealDetailRead:
     )
 
 
-def list_opportunities(db: Session) -> list[DealOpportunityRead]:
+def list_opportunities(
+    db: Session,
+    model: str | None = None,
+    min_profit_sek: float | None = None,
+    min_confidence: int | None = None,
+    source: str | None = None,
+    seller_type: str | None = None,
+    fuel_type: str | None = None,
+    transmission: str | None = None,
+    status_filter: str | None = None,
+) -> list[DealOpportunityRead]:
+    query = select(Deal).join(Deal.foreign_listing).options(selectinload(Deal.foreign_listing))
+
+    if model:
+        query = query.where(CarListing.model.ilike(f"%{model}%"))
+    if min_profit_sek is not None:
+        query = query.where(Deal.expected_profit_sek >= Decimal(str(min_profit_sek)))
+    if min_confidence is not None:
+        query = query.where(Deal.confidence_score >= min_confidence)
+    if source:
+        query = query.where(CarListing.source == source)
+    if seller_type:
+        query = query.where(CarListing.seller_type == seller_type)
+    if fuel_type:
+        query = query.where(CarListing.fuel_type == fuel_type)
+    if transmission:
+        query = query.where(CarListing.transmission == transmission)
+    if status_filter:
+        query = query.where(Deal.status == status_filter)
+
     deals = db.scalars(
-        select(Deal)
-        .options(selectinload(Deal.foreign_listing))
-        .order_by(Deal.expected_profit_sek.desc(), Deal.confidence_score.desc())
+        query.order_by(Deal.expected_profit_sek.desc(), Deal.confidence_score.desc())
     ).all()
     return [_to_opportunity_read(deal) for deal in deals]
+
+
+def update_deal_status(
+    db: Session,
+    deal_id: int,
+    payload: DealStatusUpdate,
+) -> DealOpportunityRead:
+    status_value = payload.status.strip().lower()
+    if status_value not in ALLOWED_DEAL_STATUSES:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Status must be one of: {', '.join(sorted(ALLOWED_DEAL_STATUSES))}",
+        )
+
+    deal = _get_deal_or_404(db, deal_id)
+    deal.status = status_value
+    db.commit()
+    db.refresh(deal)
+    deal = _get_deal_or_404(db, deal.id)
+    return _to_opportunity_read(deal)
+
+
+def get_settings(db: Session) -> CostAssumptionRead:
+    return _to_settings_read(_get_cost_assumptions(db))
+
+
+def update_settings(
+    db: Session,
+    payload: CostAssumptionUpdate,
+) -> CostAssumptionRead:
+    assumptions = _get_cost_assumptions(db)
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        if value is not None:
+            setattr(assumptions, field, Decimal(str(value)) if field != "minimum_confidence_score" else value)
+    db.commit()
+    db.refresh(assumptions)
+    return _to_settings_read(assumptions)
+
+
+def list_model_research(db: Session) -> list[ModelResearchRead]:
+    rows = db.scalars(
+        select(ModelResearch).order_by(ModelResearch.brand, ModelResearch.model)
+    ).all()
+    return [_to_model_research_read(row) for row in rows]
+
+
+def update_model_research(
+    db: Session,
+    research_id: int,
+    payload: ModelResearchUpdate,
+) -> ModelResearchRead:
+    research = db.get(ModelResearch, research_id)
+    if research is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Model research row not found",
+        )
+
+    decimal_fields = {
+        "target_buy_price_min",
+        "target_buy_price_max",
+        "target_sell_price_min",
+        "target_sell_price_max",
+    }
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        if value is not None:
+            setattr(research, field, Decimal(str(value)) if field in decimal_fields else value)
+    db.commit()
+    db.refresh(research)
+    return _to_model_research_read(research)
 
 
 def get_dashboard_summary(db: Session) -> DashboardSummary:

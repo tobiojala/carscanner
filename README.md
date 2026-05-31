@@ -137,6 +137,22 @@ names.
 - Scraping is intentionally out of scope for Phase 2; all dashboard
   opportunities are seeded mock data.
 
+## Workflow pages
+
+The frontend now includes the remaining Phase 2 workflow screens:
+
+- `/deals` - deal scanner table with filters for model, profit, confidence,
+  source, seller type, fuel, transmission, and status.
+- `/pipeline` - status board for moving deals through New, Researching,
+  Contacted, Negotiating, Bought, Imported, Listed in Sweden, Sold, or Rejected.
+- `/market-research` - seeded analytics for the five starter models.
+- `/settings` - editable cost assumptions used by future manual deal
+  calculations.
+
+Supporting APIs include filtered `GET /api/opportunities`,
+`PATCH /api/deals/{id}/status`, `GET/PATCH /api/settings`, and
+`GET/PATCH /api/model-research`.
+
 ## Deal detail workflow
 
 Each opportunity in the dashboard links to `/deals/{id}`. The detail page uses

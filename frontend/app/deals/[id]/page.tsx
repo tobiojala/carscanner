@@ -1,4 +1,6 @@
 import Link from "next/link";
+
+import { AppNav } from "../../../components/app-nav";
 import { notFound } from "next/navigation";
 
 import { getDealDetail } from "../../../lib/api";
@@ -64,6 +66,7 @@ export default async function DealDetailPage({ params }: PageProps) {
 
   return (
     <main className="page">
+      <AppNav />
       <section className="detail-hero">
         <div>
           <Link className="back-link" href="/">
