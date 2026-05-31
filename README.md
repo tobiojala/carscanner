@@ -137,6 +137,13 @@ names.
 - Scraping is intentionally out of scope for Phase 2; all dashboard
   opportunities are seeded mock data.
 
+## Link intake workflow
+
+Use `/link-intake` to paste batches of mobile.de, AutoScout24, Blocket, or Bytbil
+links. The app classifies each URL by marketplace and whether it appears to be a
+search link or individual listing link. Search links are useful queues; open an
+individual listing from the search results before adding a manual deal.
+
 ## Workflow pages
 
 The frontend now includes the remaining Phase 2 workflow screens:

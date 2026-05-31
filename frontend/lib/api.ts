@@ -3,6 +3,19 @@ export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   "http://localhost:8000";
 
+export type LinkIntakeItem = {
+  url: string;
+  source: string;
+  link_type: string;
+  source_listing_id: string | null;
+  seller_country: string | null;
+  notes: string[];
+};
+
+export type LinkIntakeResponse = {
+  items: LinkIntakeItem[];
+};
+
 export type Opportunity = {
   id: number;
   listing_id: number;

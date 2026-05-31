@@ -608,3 +608,67 @@ tbody tr:hover {
     grid-template-columns: 1fr;
   }
 }
+
+.link-intake-form {
+  display: grid;
+  gap: 16px;
+  padding: 0 24px 24px;
+}
+
+.link-intake-form label {
+  display: grid;
+  gap: 8px;
+  color: #52657d;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.link-intake-form textarea {
+  width: 100%;
+  border: 1px solid rgba(119, 137, 165, 0.34);
+  border-radius: 14px;
+  padding: 14px;
+  background: #ffffff;
+  color: #172033;
+  font: inherit;
+  letter-spacing: normal;
+  line-height: 1.5;
+  text-transform: none;
+}
+
+.link-intake-form button {
+  justify-self: start;
+  border: 0;
+  border-radius: 12px;
+  padding: 12px 18px;
+  background: #172033;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.link-results {
+  display: grid;
+  gap: 18px;
+  padding: 0 24px 24px;
+}
+
+.link-result-list {
+  display: grid;
+  gap: 16px;
+}
+
+.link-result {
+  border: 1px solid rgba(119, 137, 165, 0.18);
+  border-radius: 16px;
+  padding: 14px;
+  background: #ffffff;
+  overflow-wrap: anywhere;
+}
+
+.link-result a {
+  color: #2e7cf6;
+  font-weight: 800;
+}

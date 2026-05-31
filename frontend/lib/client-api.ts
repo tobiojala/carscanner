@@ -2,6 +2,7 @@ import {
   API_BASE_URL,
   type CostSettings,
   type Listing,
+  type LinkIntakeResponse,
   type ListingCreate,
   type Opportunity
 } from "./api";
@@ -54,4 +55,10 @@ export async function updateSettings(
   payload: Partial<CostSettings>
 ): Promise<CostSettings> {
   return requestJson<CostSettings>("/api/settings", "PATCH", payload);
+}
+
+export async function previewLinks(urls: string[]): Promise<LinkIntakeResponse> {
+  return requestJson<LinkIntakeResponse>("/api/link-intake/preview", "POST", {
+    urls
+  });
 }

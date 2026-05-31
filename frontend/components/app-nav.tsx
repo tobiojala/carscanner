@@ -3,6 +3,7 @@ import Link from "next/link";
 const links = [
   ["Dashboard", "/"],
   ["Deal scanner", "/deals"],
+  ["Link intake", "/link-intake"],
   ["Pipeline", "/pipeline"],
   ["Market research", "/market-research"],
   ["Settings", "/settings"]
