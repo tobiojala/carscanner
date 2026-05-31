@@ -1,0 +1,14 @@
+{
+  "name": "car-arbitrage-scanner",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Monorepo for a car arbitrage scanning dashboard.",
+  "scripts": {
+    "dev": "docker compose up --build",
+    "dev:down": "docker compose down",
+    "dev:clean": "docker compose down -v"
+  },
+  "workspaces": [
+    "frontend"
+  ]
+}

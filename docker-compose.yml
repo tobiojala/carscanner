@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: car-arbitrage-db
+    environment:
+      POSTGRES_DB: car_arbitrage
+      POSTGRES_USER: car_user
+      POSTGRES_PASSWORD: car_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U car_user -d car_arbitrage"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    container_name: car-arbitrage-backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://car_user:car_password@db:5432/car_arbitrage
+      BACKEND_CORS_ORIGINS: http://localhost:3000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/app:/app/app
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: car-arbitrage-frontend
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/app:/app/app
+      - ./frontend/lib:/app/lib
+      - ./frontend/public:/app/public
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
