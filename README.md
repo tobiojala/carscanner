@@ -59,6 +59,34 @@ docker compose down -v
 ```
 
 
+## Troubleshooting localhost
+
+If http://localhost:3000 does not load after pulling new Phase 2 changes, rebuild
+the containers first:
+
+```bash
+docker compose up --build
+```
+
+If the backend logs show database or Alembic/schema errors from an older local
+run, reset the local Postgres volume and start again:
+
+```bash
+docker compose down -v
+docker compose up --build
+```
+
+Useful checks while the stack is running:
+
+```bash
+docker compose ps
+docker compose logs frontend
+docker compose logs backend
+```
+
+The frontend now starts even if the backend is still becoming healthy, so
+localhost:3000 should show either the dashboard or a backend connection message.
+
 ## Database migrations
 
 Docker Compose runs Alembic migrations before the backend starts. For local
