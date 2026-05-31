@@ -7,6 +7,7 @@ from app.schemas import (
     ComparableRead,
     DashboardSummary,
     DealCalculateRequest,
+    DealDetailRead,
     DealOpportunityRead,
     ListingCreate,
     ListingRead,
@@ -18,6 +19,7 @@ from app.services.listing_service import (
     create_listing,
     delete_listing,
     get_dashboard_summary,
+    get_deal_detail,
     get_listing,
     list_comparables,
     list_listings,
@@ -91,6 +93,14 @@ def post_deal_calculation(
     db: Session = Depends(get_db),
 ) -> DealOpportunityRead:
     return calculate_deal(db, payload)
+
+
+@router.get("/deals/{deal_id}", response_model=DealDetailRead)
+def get_deal_detail_endpoint(
+    deal_id: int,
+    db: Session = Depends(get_db),
+) -> DealDetailRead:
+    return get_deal_detail(db, deal_id)
 
 
 @router.get("/dashboard", response_model=DashboardSummary)

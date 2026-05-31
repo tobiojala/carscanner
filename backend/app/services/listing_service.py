@@ -11,8 +11,10 @@ from app.models import CarListing, CostAssumption, Deal, ModelResearch, SwedishC
 from app.schemas import (
     ComparableCreate,
     ComparableRead,
+    CostBreakdown,
     DashboardSummary,
     DealCalculateRequest,
+    DealDetailRead,
     DealOpportunityRead,
     ListingCreate,
     ListingRead,
@@ -104,6 +106,20 @@ def _get_listing_or_404(db: Session, listing_id: int) -> CarListing:
             detail="Listing not found",
         )
     return listing
+
+
+def _get_deal_or_404(db: Session, deal_id: int) -> Deal:
+    deal = db.scalars(
+        select(Deal)
+        .options(selectinload(Deal.foreign_listing))
+        .where(Deal.id == deal_id)
+    ).first()
+    if deal is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Deal not found",
+        )
+    return deal
 
 
 def _get_cost_assumptions(db: Session) -> CostAssumption:
@@ -312,6 +328,39 @@ def calculate_deal(db: Session, payload: DealCalculateRequest) -> DealOpportunit
         .where(Deal.id == deal.id)
     ).one()
     return _to_opportunity_read(deal)
+
+
+def _matching_comparables(db: Session, listing: CarListing) -> list[ComparableRead]:
+    comparables = db.scalars(
+        select(SwedishComparable)
+        .where(
+            SwedishComparable.brand == listing.brand,
+            SwedishComparable.model == listing.model,
+        )
+        .order_by(SwedishComparable.price_sek.desc())
+    ).all()
+    return [_to_comparable_read(comparable) for comparable in comparables]
+
+
+def get_deal_detail(db: Session, deal_id: int) -> DealDetailRead:
+    deal = _get_deal_or_404(db, deal_id)
+    listing = deal.foreign_listing
+    return DealDetailRead(
+        opportunity=_to_opportunity_read(deal),
+        listing=_to_listing_read(listing),
+        cost_breakdown=CostBreakdown(
+            purchase_price_sek=_money(deal.purchase_price_sek),
+            transport_cost_sek=_money(deal.transport_cost_sek),
+            registration_cost_sek=_money(deal.registration_cost_sek),
+            inspection_cost_sek=_money(deal.inspection_cost_sek),
+            repair_buffer_sek=_money(deal.repair_buffer_sek),
+            tax_cost_sek=_money(deal.tax_cost_sek),
+            other_costs_sek=_money(deal.other_costs_sek),
+            total_landed_cost_sek=_money(deal.total_landed_cost_sek),
+        ),
+        comparables=_matching_comparables(db, listing),
+        notes=deal.notes,
+    )
 
 
 def list_opportunities(db: Session) -> list[DealOpportunityRead]:

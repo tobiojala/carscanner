@@ -1,7 +1,9 @@
 from app.schemas.listing import (
     ComparableCreate,
     ComparableRead,
+    CostBreakdown,
     DashboardSummary,
+    DealDetailRead,
     DealCalculateRequest,
     DealOpportunityRead,
     ListingCreate,
@@ -12,7 +14,9 @@ from app.schemas.listing import (
 __all__ = [
     "ComparableCreate",
     "ComparableRead",
+    "CostBreakdown",
     "DashboardSummary",
+    "DealDetailRead",
     "DealCalculateRequest",
     "DealOpportunityRead",
     "ListingCreate",

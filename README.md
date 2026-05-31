@@ -137,6 +137,12 @@ names.
 - Scraping is intentionally out of scope for Phase 2; all dashboard
   opportunities are seeded mock data.
 
+## Deal detail workflow
+
+Each opportunity in the dashboard links to `/deals/{id}`. The detail page uses
+`GET /api/deals/{id}` to show the foreign listing, deterministic cost breakdown,
+score explanation, risk flags, and matching Swedish comparable listings.
+
 ## Manual input workflow
 
 The dashboard includes a Phase 2 manual listing form. Submitting it creates a

@@ -148,6 +148,25 @@ class DealOpportunityRead(BaseModel):
     created_at: datetime
 
 
+class CostBreakdown(BaseModel):
+    purchase_price_sek: float
+    transport_cost_sek: float
+    registration_cost_sek: float
+    inspection_cost_sek: float
+    repair_buffer_sek: float
+    tax_cost_sek: float
+    other_costs_sek: float
+    total_landed_cost_sek: float
+
+
+class DealDetailRead(BaseModel):
+    opportunity: DealOpportunityRead
+    listing: ListingRead
+    cost_breakdown: CostBreakdown
+    comparables: list[ComparableRead]
+    notes: str | None
+
+
 class DashboardSummary(BaseModel):
     cars_scanned_today: int
     active_opportunities: int

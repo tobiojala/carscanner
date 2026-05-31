@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { ManualListingForm } from "../components/manual-listing-form";
 import { getDashboardSummary, getOpportunities } from "../lib/api";
 
@@ -165,9 +167,9 @@ export default async function DashboardPage() {
             {opportunities.map((opportunity) => (
               <tr key={opportunity.id}>
                 <td>
-                  <div className="vehicle">
+                  <Link className="vehicle detail-link" href={`/deals/${opportunity.id}`}>
                     {opportunity.year} {opportunity.brand} {opportunity.model}
-                  </div>
+                  </Link>
                   <div className="muted">
                     {opportunity.trim ?? opportunity.variant ?? "Unknown trim"} · {" "}
                     {numberFormatter.format(opportunity.mileage_km)} km
