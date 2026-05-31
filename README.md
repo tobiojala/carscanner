@@ -91,6 +91,15 @@ docker compose down -v
 docker compose up --build
 ```
 
+If a newly added page returns 404, make sure you have pulled the latest branch
+and rebuilt the frontend image:
+
+```bash
+git pull
+docker compose down
+FRONTEND_PORT=5173 BACKEND_PORT=8010 POSTGRES_PORT=55432 docker compose up --build
+```
+
 Useful checks while the stack is running:
 
 ```bash

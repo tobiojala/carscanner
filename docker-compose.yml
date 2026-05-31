@@ -49,6 +49,7 @@ services:
       - "${FRONTEND_PORT:-3000}:3000"
     volumes:
       - ./frontend/app:/app/frontend/app
+      - ./frontend/components:/app/frontend/components
       - ./frontend/lib:/app/frontend/lib
       - ./frontend/public:/app/frontend/public
     depends_on:
