@@ -149,9 +149,9 @@ names.
 ## Model research seed modules
 
 Model-specific research profiles can live under `backend/app/seeds/model_research/`.
-For example, `bmw_320d_touring.py` exposes `build_bmw_320d_touring_seed()`,
-which returns a fresh SQLAlchemy `ModelResearch` object mapped from the richer
-research profile into the current `model_research` table columns.
+For example, `bmw_320d_touring.py` and `vw_passat_gte_variant.py` expose
+builder functions that return fresh SQLAlchemy `ModelResearch` objects mapped
+from richer research profiles into the current `model_research` table columns.
 
 ## Link intake workflow
 
