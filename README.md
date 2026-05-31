@@ -146,6 +146,13 @@ names.
 - Scraping is intentionally out of scope for Phase 2; all dashboard
   opportunities are seeded mock data.
 
+## Model research seed modules
+
+Model-specific research profiles can live under `backend/app/seeds/model_research/`.
+For example, `bmw_320d_touring.py` exposes `build_bmw_320d_touring_seed()`,
+which returns a fresh SQLAlchemy `ModelResearch` object mapped from the richer
+research profile into the current `model_research` table columns.
+
 ## Link intake workflow
 
 Use `/link-intake` to paste batches of mobile.de, AutoScout24, Blocket, or Bytbil

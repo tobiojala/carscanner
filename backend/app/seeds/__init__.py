@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Alert, CarListing, CostAssumption, Deal, ModelResearch, SwedishComparable
 from app.scoring import DealScoringInput, ProfitCalculationInput, calculate_profit, score_deal
+from app.seeds.model_research import build_bmw_320d_touring_seed
 
 DEFAULT_COST_ASSUMPTIONS = {
     "eur_to_sek_rate": Decimal("11.40"),
@@ -173,7 +174,6 @@ SEED_COMPARABLES = [
 MODEL_RESEARCH = [
     ("VW", "Golf", "GTD", "2014-2020", ["GTD", "Variant", "DSG"], ["base diesel"], "Check DSG service history.", 86, 82, 88, "High liquidity but pricing varies by trim.", Decimal("14500"), Decimal("17500"), Decimal("210000"), Decimal("240000")),
     ("VW", "Passat GTE", "Variant", "2017-2021", ["GTE", "Executive", "panoramic roof"], ["high-mile battery unknown"], "Watch battery and charging history.", 90, 78, 82, "Hybrid demand is strong in Sweden.", Decimal("19500"), Decimal("23000"), Decimal("270000"), Decimal("315000")),
-    ("BMW", "320d Touring", "G21", "2014-2020", ["M Sport", "xDrive"], ["base trim"], "Verify timing chain and service intervals.", 84, 76, 80, "Premium wagon demand with M Sport preference.", Decimal("20500"), Decimal("24000"), Decimal("300000"), Decimal("345000")),
     ("Audi", "A4 Avant", "B9", "2014-2020", ["S-Line", "quattro"], ["manual base trim"], "Check gearbox and quattro service history.", 82, 80, 78, "Strong resale but private sellers increase risk.", Decimal("18500"), Decimal("22000"), Decimal("275000"), Decimal("315000")),
     ("Volvo", "V60", "D4", "2015-2020", ["R-Design", "Inscription"], ["fleet base cars"], "Confirm import equipment and service records.", 88, 72, 84, "Swedish brand trust supports resale.", Decimal("22000"), Decimal("25000"), Decimal("315000"), Decimal("355000")),
 ]
@@ -257,37 +257,40 @@ def _seed_comparables(db: Session) -> None:
 
 
 def _seed_model_research(db: Session) -> None:
-    for row in MODEL_RESEARCH:
-        brand, model, variant = row[:3]
+    research_objects = [
+        ModelResearch(
+            brand=row[0],
+            model=row[1],
+            variant=row[2],
+            good_years=row[3],
+            strong_trims=row[4],
+            weak_trims=row[5],
+            common_issues=row[6],
+            swedish_demand_score=row[7],
+            german_supply_score=row[8],
+            liquidity_score=row[9],
+            risk_notes=row[10],
+            target_buy_price_min=row[11],
+            target_buy_price_max=row[12],
+            target_sell_price_min=row[13],
+            target_sell_price_max=row[14],
+        )
+        for row in MODEL_RESEARCH
+    ]
+    research_objects.append(build_bmw_320d_touring_seed())
+
+    for research in research_objects:
         existing = db.scalars(
             select(ModelResearch).where(
-                ModelResearch.brand == brand,
-                ModelResearch.model == model,
-                ModelResearch.variant == variant,
+                ModelResearch.brand == research.brand,
+                ModelResearch.model == research.model,
+                ModelResearch.variant == research.variant,
             )
         ).first()
         if existing is not None:
             continue
 
-        db.add(
-            ModelResearch(
-                brand=brand,
-                model=model,
-                variant=variant,
-                good_years=row[3],
-                strong_trims=row[4],
-                weak_trims=row[5],
-                common_issues=row[6],
-                swedish_demand_score=row[7],
-                german_supply_score=row[8],
-                liquidity_score=row[9],
-                risk_notes=row[10],
-                target_buy_price_min=row[11],
-                target_buy_price_max=row[12],
-                target_sell_price_min=row[13],
-                target_sell_price_max=row[14],
-            )
-        )
+        db.add(research)
 
 
 def _average_listing_age_for_model(db: Session, listing: CarListing) -> int:
