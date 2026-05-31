@@ -10,5 +10,8 @@
   },
   "workspaces": [
     "frontend"
-  ]
+  ],
+  "overrides": {
+    "postcss": "^8.5.15"
+  }
 }

@@ -53,8 +53,9 @@ docker compose down -v
 
 - The backend creates the current schema on startup and inserts seed listings if
   the database is empty.
-- The frontend reads `NEXT_PUBLIC_API_BASE_URL` and defaults to
-  `http://localhost:8000`.
+- The frontend reads server-side `API_BASE_URL` first, then
+  `NEXT_PUBLIC_API_BASE_URL`, and defaults to `http://localhost:8000`. Docker
+  Compose sets `API_BASE_URL` to the backend service hostname.
 - The architecture keeps API routing, settings, persistence, schemas, and
   business logic separated so scraping can be added later without coupling it to
   the dashboard or database bootstrap code.
