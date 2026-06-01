@@ -1,5 +1,7 @@
+import csv
 from collections import Counter
 from decimal import Decimal
+from io import StringIO
 from statistics import mean
 from uuid import uuid4
 
@@ -11,6 +13,10 @@ from app.models import CarListing, CostAssumption, Deal, ModelResearch, SwedishC
 from app.schemas import (
     ComparableCreate,
     ComparableRead,
+    CsvImportResponse,
+    ConfidenceExplanationRead,
+    ActualOutcomeUpdate,
+    ActualOutcomeRead,
     ModelResearchUpdate,
     ModelResearchRead,
     DealStatusUpdate,
@@ -25,7 +31,43 @@ from app.schemas import (
     ListingRead,
     ListingUpdate,
 )
-from app.scoring import DealScoringInput, ProfitCalculationInput, calculate_profit, score_deal
+from app.scoring import (
+    ActualOutcomeInput,
+    DealScoringInput,
+    ProfitCalculationInput,
+    calculate_actual_outcome,
+    calculate_profit,
+    score_deal,
+)
+
+REJECT_REASONS = {
+    "Profit too low",
+    "Weak Swedish comps",
+    "Mileage too high",
+    "Bad trim/spec",
+    "Missing service history",
+    "Accident/damage risk",
+    "Seller risk",
+    "Price too high",
+    "Duplicate listing",
+    "Other",
+}
+
+CSV_REQUIRED_COLUMNS = {
+    "source",
+    "listing_url",
+    "brand",
+    "model",
+    "year",
+    "mileage_km",
+    "price_eur",
+    "seller_country",
+    "seller_type",
+    "fuel_type",
+    "transmission",
+    "trim",
+    "notes",
+}
 
 ALLOWED_DEAL_STATUSES = {
     "new",
@@ -48,6 +90,34 @@ def _decimal(value: float | Decimal | None, fallback: Decimal) -> Decimal:
     if value is None:
         return fallback
     return Decimal(str(value))
+
+
+def _actual_outcome(deal: Deal) -> ActualOutcomeRead:
+    return ActualOutcomeRead(
+        actual_purchase_price_sek=_money(deal.actual_purchase_price_sek) if deal.actual_purchase_price_sek is not None else None,
+        actual_transport_cost_sek=_money(deal.actual_transport_cost_sek) if deal.actual_transport_cost_sek is not None else None,
+        actual_registration_cost_sek=_money(deal.actual_registration_cost_sek) if deal.actual_registration_cost_sek is not None else None,
+        actual_repair_cost_sek=_money(deal.actual_repair_cost_sek) if deal.actual_repair_cost_sek is not None else None,
+        actual_total_cost_sek=_money(deal.actual_total_cost_sek) if deal.actual_total_cost_sek is not None else None,
+        actual_sale_price_sek=_money(deal.actual_sale_price_sek) if deal.actual_sale_price_sek is not None else None,
+        actual_profit_sek=_money(deal.actual_profit_sek) if deal.actual_profit_sek is not None else None,
+        days_to_sell=deal.days_to_sell,
+        lesson_learned=deal.lesson_learned,
+    )
+
+
+def _confidence_explanation(deal: Deal) -> ConfidenceExplanationRead:
+    raw = deal.confidence_explanation or {}
+    return ConfidenceExplanationRead(
+        score=int(raw.get("score", deal.confidence_score)),
+        positive_factors=list(raw.get("positive_factors", [])),
+        negative_factors=list(raw.get("negative_factors", [])),
+        missing_data=list(raw.get("missing_data", [])),
+        comparable_count=int(raw.get("comparable_count", 0)),
+        summary=raw.get("summary") or (
+            f"Confidence {deal.confidence_score}/100. Detailed factors were not stored for this older calculation."
+        ),
+    )
 
 
 def _to_listing_read(listing: CarListing) -> ListingRead:
@@ -107,6 +177,9 @@ def _to_opportunity_read(deal: Deal) -> DealOpportunityRead:
         fuel_type=listing.fuel_type,
         transmission=listing.transmission,
         price_eur=_money(listing.price_eur),
+        desired_minimum_profit_sek=_money(deal.desired_minimum_profit_sek),
+        recommended_max_bid_eur=_money(deal.recommended_max_bid_eur),
+        eur_to_sek_rate=_money(deal.eur_to_sek_rate),
         purchase_price_sek=_money(deal.purchase_price_sek),
         estimated_swedish_price_sek=_money(deal.estimated_swedish_price_sek),
         total_landed_cost_sek=_money(deal.total_landed_cost_sek),
@@ -117,8 +190,12 @@ def _to_opportunity_read(deal: Deal) -> DealOpportunityRead:
         liquidity_score=deal.liquidity_score,
         deal_grade=deal.deal_grade,
         status=deal.status,
+        reject_reason=deal.reject_reason,
+        reject_notes=deal.reject_notes,
         risk_flags=deal.risk_flags,
         explanation=deal.explanation,
+        confidence_explanation=_confidence_explanation(deal),
+        actual_outcome=_actual_outcome(deal),
         created_at=deal.created_at,
     )
 
@@ -325,6 +402,9 @@ def calculate_deal(db: Session, payload: DealCalculateRequest) -> DealOpportunit
     deal = Deal(
         foreign_listing_id=listing.id,
         estimated_swedish_price_sek=estimated_swedish_price_sek,
+        desired_minimum_profit_sek=desired_profit_sek,
+        recommended_max_bid_eur=profit.recommended_max_bid_eur,
+        eur_to_sek_rate=assumptions.eur_to_sek_rate,
         purchase_price_sek=profit.purchase_price_sek,
         transport_cost_sek=transport_cost_sek,
         registration_cost_sek=registration_cost_sek,
@@ -342,6 +422,7 @@ def calculate_deal(db: Session, payload: DealCalculateRequest) -> DealOpportunit
         status="new",
         notes="Calculated from manual input.",
         explanation=scoring.explanation,
+        confidence_explanation=scoring.confidence_explanation.model_dump(),
         risk_flags=scoring.risk_flags,
     )
     db.add(deal)
@@ -374,6 +455,8 @@ def get_deal_detail(db: Session, deal_id: int) -> DealDetailRead:
         opportunity=_to_opportunity_read(deal),
         listing=_to_listing_read(listing),
         cost_breakdown=CostBreakdown(
+            eur_to_sek_rate=_money(deal.eur_to_sek_rate),
+            german_purchase_price_eur=_money(listing.price_eur),
             purchase_price_sek=_money(deal.purchase_price_sek),
             transport_cost_sek=_money(deal.transport_cost_sek),
             registration_cost_sek=_money(deal.registration_cost_sek),
@@ -382,6 +465,10 @@ def get_deal_detail(db: Session, deal_id: int) -> DealDetailRead:
             tax_cost_sek=_money(deal.tax_cost_sek),
             other_costs_sek=_money(deal.other_costs_sek),
             total_landed_cost_sek=_money(deal.total_landed_cost_sek),
+            estimated_swedish_resale_price_sek=_money(deal.estimated_swedish_price_sek),
+            expected_profit_sek=_money(deal.expected_profit_sek),
+            desired_minimum_profit_sek=_money(deal.desired_minimum_profit_sek),
+            recommended_max_bid_eur=_money(deal.recommended_max_bid_eur),
         ),
         comparables=_matching_comparables(db, listing),
         notes=deal.notes,
@@ -438,10 +525,93 @@ def update_deal_status(
 
     deal = _get_deal_or_404(db, deal_id)
     deal.status = status_value
+    if status_value == "rejected":
+        if payload.reject_reason and payload.reject_reason not in REJECT_REASONS:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Reject reason must be one of: {', '.join(sorted(REJECT_REASONS))}",
+            )
+        deal.reject_reason = payload.reject_reason or deal.reject_reason or "Other"
+        deal.reject_notes = payload.reject_notes
+    elif status_value != "rejected":
+        deal.reject_reason = None
+        deal.reject_notes = None
     db.commit()
     db.refresh(deal)
     deal = _get_deal_or_404(db, deal.id)
     return _to_opportunity_read(deal)
+
+
+def update_actual_outcome(
+    db: Session,
+    deal_id: int,
+    payload: ActualOutcomeUpdate,
+) -> DealDetailRead:
+    deal = _get_deal_or_404(db, deal_id)
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        if value is not None and field != "lesson_learned":
+            setattr(deal, field, Decimal(str(value)))
+        else:
+            setattr(deal, field, value)
+
+    if (
+        deal.actual_purchase_price_sek is not None
+        and deal.actual_transport_cost_sek is not None
+        and deal.actual_registration_cost_sek is not None
+        and deal.actual_repair_cost_sek is not None
+    ):
+        actual = calculate_actual_outcome(
+            ActualOutcomeInput(
+                actual_purchase_price_sek=deal.actual_purchase_price_sek,
+                actual_transport_cost_sek=deal.actual_transport_cost_sek,
+                actual_registration_cost_sek=deal.actual_registration_cost_sek,
+                actual_repair_cost_sek=deal.actual_repair_cost_sek,
+                actual_sale_price_sek=deal.actual_sale_price_sek,
+            )
+        )
+        deal.actual_total_cost_sek = actual.actual_total_cost_sek
+        deal.actual_profit_sek = actual.actual_profit_sek
+
+    db.commit()
+    return get_deal_detail(db, deal.id)
+
+
+def import_listings_csv(db: Session, csv_text: str) -> CsvImportResponse:
+    reader = csv.DictReader(StringIO(csv_text))
+    if reader.fieldnames is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="CSV header row is required")
+
+    missing_columns = sorted(CSV_REQUIRED_COLUMNS - set(reader.fieldnames))
+    if missing_columns:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Missing required columns: {', '.join(missing_columns)}",
+        )
+
+    listings: list[ListingRead] = []
+    errors: list[str] = []
+    for row_number, row in enumerate(reader, start=2):
+        try:
+            payload = ListingCreate(
+                source=row["source"] or "csv",
+                listing_url=row["listing_url"] or None,
+                seller_country=row["seller_country"] or "DE",
+                seller_type=row["seller_type"] or "dealer",
+                brand=row["brand"],
+                model=row["model"],
+                trim=row["trim"] or None,
+                year=int(row["year"]),
+                mileage_km=int(row["mileage_km"]),
+                price_eur=float(row["price_eur"]),
+                fuel_type=row["fuel_type"] or None,
+                transmission=row["transmission"] or None,
+                description=row["notes"] or None,
+            )
+            listings.append(create_listing(db, payload))
+        except Exception as exc:  # noqa: BLE001 - keep row-level import errors visible
+            errors.append(f"Row {row_number}: {exc}")
+
+    return CsvImportResponse(imported_count=len(listings), errors=errors, listings=listings)
 
 
 def get_settings(db: Session) -> CostAssumptionRead:

@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { ActualOutcomeForm } from "../../../components/actual-outcome-form";
 import { AppNav } from "../../../components/app-nav";
 import { ComparableForm } from "../../../components/comparable-form";
 import { notFound } from "next/navigation";
@@ -148,6 +149,12 @@ export default async function DealDetailPage({ params }: PageProps) {
           <p className="detail-copy">
             {opportunity.explanation ?? "No scoring explanation available."}
           </p>
+          {opportunity.reject_reason ? (
+            <p className="detail-copy">
+              Rejected: {opportunity.reject_reason}
+              {opportunity.reject_notes ? ` - ${opportunity.reject_notes}` : ""}
+            </p>
+          ) : null}
           <div className="risk-list">
             {opportunity.risk_flags.length > 0 ? (
               opportunity.risk_flags.map((flag) => (
@@ -162,12 +169,55 @@ export default async function DealDetailPage({ params }: PageProps) {
         </article>
       </section>
 
+      <section className="detail-card confidence-card">
+        <h2>Confidence explanation</h2>
+        <p className="detail-copy">{opportunity.confidence_explanation.summary}</p>
+        <div className="confidence-columns">
+          <div>
+            <h3>Positive factors</h3>
+            <ul>
+              {opportunity.confidence_explanation.positive_factors.map((factor) => (
+                <li key={factor}>{factor}</li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h3>Negative factors</h3>
+            <ul>
+              {opportunity.confidence_explanation.negative_factors.map((factor) => (
+                <li key={factor}>{factor}</li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h3>Missing data</h3>
+            <ul>
+              {opportunity.confidence_explanation.missing_data.length > 0 ? (
+                opportunity.confidence_explanation.missing_data.map((item) => (
+                  <li key={item}>{item}</li>
+                ))
+              ) : (
+                <li>No major missing data noted</li>
+              )}
+            </ul>
+          </div>
+        </div>
+      </section>
+
       <section className="detail-grid two-column-grid">
         <article className="detail-card">
           <h2>Cost breakdown</h2>
           <dl className="cost-list">
             <div>
-              <dt>Purchase price</dt>
+              <dt>EUR/SEK rate</dt>
+              <dd>{costBreakdown.eur_to_sek_rate}</dd>
+            </div>
+            <div>
+              <dt>German purchase price</dt>
+              <dd>{formatEur(costBreakdown.german_purchase_price_eur)}</dd>
+            </div>
+            <div>
+              <dt>Purchase price SEK</dt>
               <dd>{formatSek(costBreakdown.purchase_price_sek)}</dd>
             </div>
             <div>
@@ -194,9 +244,25 @@ export default async function DealDetailPage({ params }: PageProps) {
               <dt>Other costs</dt>
               <dd>{formatSek(costBreakdown.other_costs_sek)}</dd>
             </div>
+            <div>
+              <dt>Swedish resale estimate</dt>
+              <dd>{formatSek(costBreakdown.estimated_swedish_resale_price_sek)}</dd>
+            </div>
+            <div>
+              <dt>Desired minimum profit</dt>
+              <dd>{formatSek(costBreakdown.desired_minimum_profit_sek)}</dd>
+            </div>
+            <div>
+              <dt>Recommended max bid</dt>
+              <dd>{formatEur(costBreakdown.recommended_max_bid_eur)}</dd>
+            </div>
             <div className="total-row">
               <dt>Total landed cost</dt>
               <dd>{formatSek(costBreakdown.total_landed_cost_sek)}</dd>
+            </div>
+            <div className="total-row">
+              <dt>Expected profit</dt>
+              <dd>{formatSek(costBreakdown.expected_profit_sek)}</dd>
             </div>
           </dl>
         </article>
@@ -229,6 +295,10 @@ export default async function DealDetailPage({ params }: PageProps) {
         </article>
       </section>
 
+
+      {(["bought", "imported", "listed_in_sweden", "sold"].includes(opportunity.status)) ? (
+        <ActualOutcomeForm dealId={opportunity.id} outcome={opportunity.actual_outcome} />
+      ) : null}
 
       <ComparableForm
         compact

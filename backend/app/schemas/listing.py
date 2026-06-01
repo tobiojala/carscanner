@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -105,6 +107,12 @@ class ComparableRead(ComparableCreate):
     model_config = ConfigDict(from_attributes=True)
 
 
+class CsvImportResponse(BaseModel):
+    imported_count: int
+    errors: list[str]
+    listings: list[ListingRead]
+
+
 class DealCalculateRequest(BaseModel):
     listing_id: int
     estimated_swedish_price_sek: float = Field(gt=0)
@@ -133,6 +141,9 @@ class DealOpportunityRead(BaseModel):
     fuel_type: str | None
     transmission: str | None
     price_eur: float
+    desired_minimum_profit_sek: float
+    recommended_max_bid_eur: float
+    eur_to_sek_rate: float
     purchase_price_sek: float
     estimated_swedish_price_sek: float
     total_landed_cost_sek: float
@@ -143,12 +154,18 @@ class DealOpportunityRead(BaseModel):
     liquidity_score: int
     deal_grade: str
     status: str
+    reject_reason: str | None
+    reject_notes: str | None
     risk_flags: list[str]
     explanation: str | None
+    confidence_explanation: ConfidenceExplanationRead
+    actual_outcome: ActualOutcomeRead
     created_at: datetime
 
 
 class CostBreakdown(BaseModel):
+    eur_to_sek_rate: float
+    german_purchase_price_eur: float
     purchase_price_sek: float
     transport_cost_sek: float
     registration_cost_sek: float
@@ -157,6 +174,10 @@ class CostBreakdown(BaseModel):
     tax_cost_sek: float
     other_costs_sek: float
     total_landed_cost_sek: float
+    estimated_swedish_resale_price_sek: float
+    expected_profit_sek: float
+    desired_minimum_profit_sek: float
+    recommended_max_bid_eur: float
 
 
 class DealDetailRead(BaseModel):
@@ -169,6 +190,32 @@ class DealDetailRead(BaseModel):
 
 class DealStatusUpdate(BaseModel):
     status: str
+    reject_reason: str | None = None
+    reject_notes: str | None = None
+
+
+class ActualOutcomeUpdate(BaseModel):
+    actual_purchase_price_sek: float | None = Field(default=None, ge=0)
+    actual_transport_cost_sek: float | None = Field(default=None, ge=0)
+    actual_registration_cost_sek: float | None = Field(default=None, ge=0)
+    actual_repair_cost_sek: float | None = Field(default=None, ge=0)
+    actual_total_cost_sek: float | None = Field(default=None, ge=0)
+    actual_sale_price_sek: float | None = Field(default=None, ge=0)
+    days_to_sell: int | None = Field(default=None, ge=0)
+    lesson_learned: str | None = None
+
+
+class ActualOutcomeRead(ActualOutcomeUpdate):
+    actual_profit_sek: float | None = None
+
+
+class ConfidenceExplanationRead(BaseModel):
+    score: int
+    positive_factors: list[str]
+    negative_factors: list[str]
+    missing_data: list[str]
+    comparable_count: int
+    summary: str
 
 
 class CostAssumptionRead(BaseModel):

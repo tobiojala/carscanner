@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Body, Depends, Response, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.schemas import (
     ComparableCreate,
     ComparableRead,
+    CsvImportResponse,
+    ActualOutcomeUpdate,
     ModelResearchUpdate,
     ModelResearchRead,
     DealStatusUpdate,
@@ -31,6 +33,8 @@ from app.services.listing_service import (
     get_dashboard_summary,
     get_deal_detail,
     get_listing,
+    update_actual_outcome,
+    import_listings_csv,
     update_settings,
     update_model_research,
     update_deal_status,
@@ -58,6 +62,14 @@ def get_listings(db: Session = Depends(get_db)) -> list[ListingRead]:
 @router.post("/listings", response_model=ListingRead, status_code=status.HTTP_201_CREATED)
 def post_listing(payload: ListingCreate, db: Session = Depends(get_db)) -> ListingRead:
     return create_listing(db, payload)
+
+
+@router.post("/listings/import-csv", response_model=CsvImportResponse)
+def post_listings_csv_import(
+    csv_text: str = Body(media_type="text/csv"),
+    db: Session = Depends(get_db),
+) -> CsvImportResponse:
+    return import_listings_csv(db, csv_text)
 
 
 @router.get("/listings/{listing_id}", response_model=ListingRead)
@@ -145,6 +157,15 @@ def patch_deal_status(
     db: Session = Depends(get_db),
 ) -> DealOpportunityRead:
     return update_deal_status(db, deal_id, payload)
+
+
+@router.patch("/deals/{deal_id}/actual-outcome", response_model=DealDetailRead)
+def patch_actual_outcome(
+    deal_id: int,
+    payload: ActualOutcomeUpdate,
+    db: Session = Depends(get_db),
+) -> DealDetailRead:
+    return update_actual_outcome(db, deal_id, payload)
 
 
 @router.get("/settings", response_model=CostAssumptionRead)

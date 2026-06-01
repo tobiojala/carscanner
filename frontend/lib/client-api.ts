@@ -1,7 +1,9 @@
 import {
   API_BASE_URL,
   type Comparable,
+  type ActualOutcome,
   type ComparableCreate,
+  type DealDetail,
   type CostSettings,
   type Listing,
   type LinkIntakeResponse,
@@ -46,10 +48,14 @@ export async function calculateDeal(
 
 export async function updateDealStatus(
   dealId: number,
-  status: string
+  status: string,
+  rejectReason?: string,
+  rejectNotes?: string
 ): Promise<Opportunity> {
   return requestJson<Opportunity>(`/api/deals/${dealId}/status`, "PATCH", {
-    status
+    status,
+    reject_reason: rejectReason,
+    reject_notes: rejectNotes
   });
 }
 
@@ -69,4 +75,28 @@ export async function createComparable(
   payload: ComparableCreate
 ): Promise<Comparable> {
   return requestJson<Comparable>("/api/comparables", "POST", payload);
+}
+
+export async function updateActualOutcome(
+  dealId: number,
+  payload: Partial<ActualOutcome>
+): Promise<DealDetail> {
+  return requestJson<DealDetail>(`/api/deals/${dealId}/actual-outcome`, "PATCH", payload);
+}
+
+export async function importListingsCsv(csvText: string) {
+  const response = await fetch(`${API_BASE_URL}/api/listings/import-csv`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/csv"
+    },
+    body: csvText
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || `Backend request failed: ${response.status}`);
+  }
+
+  return response.json();
 }

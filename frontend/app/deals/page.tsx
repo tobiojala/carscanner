@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AppNav } from "../../components/app-nav";
+import { CsvTools } from "../../components/csv-tools";
 import { getOpportunities, type OpportunityFilters } from "../../lib/api";
 
 export const dynamic = "force-dynamic";
@@ -52,6 +53,8 @@ export default async function DealsPage({ searchParams }: PageProps) {
           </p>
         </div>
       </section>
+
+      <CsvTools opportunities={opportunities} />
 
       <section className="filter-card">
         <form className="filter-form">

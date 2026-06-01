@@ -115,6 +115,9 @@ class Deal(TimestampMixin, Base):
         index=True,
     )
     estimated_swedish_price_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    desired_minimum_profit_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    recommended_max_bid_eur: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    eur_to_sek_rate: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False, default=0)
     purchase_price_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     transport_cost_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     registration_cost_sek: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
@@ -132,6 +135,23 @@ class Deal(TimestampMixin, Base):
     status: Mapped[str] = mapped_column(String(40), nullable=False, default="new", index=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
+    confidence_explanation: Mapped[dict[str, Any]] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=dict,
+        server_default=text("'{}'::jsonb"),
+    )
+    reject_reason: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    reject_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    actual_purchase_price_sek: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    actual_transport_cost_sek: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    actual_registration_cost_sek: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    actual_repair_cost_sek: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    actual_total_cost_sek: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    actual_sale_price_sek: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    actual_profit_sek: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    days_to_sell: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    lesson_learned: Mapped[str | None] = mapped_column(Text, nullable=True)
     risk_flags: Mapped[list[str]] = mapped_column(
         JSONB,
         nullable=False,

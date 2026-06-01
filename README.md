@@ -117,6 +117,22 @@ lsof -i :3000
 The frontend now starts even if the backend is still becoming healthy, so
 localhost:3000 should show either the dashboard or a backend connection message.
 
+## Running tests
+
+Backend unit tests:
+
+```bash
+PYTHONPATH=backend python3 -m unittest discover -s backend/tests
+```
+
+Frontend validation:
+
+```bash
+npm --workspace frontend run lint
+npm --workspace frontend run typecheck
+npm --workspace frontend run build
+```
+
 ## Database migrations
 
 Docker Compose runs Alembic migrations before the backend starts. For local
@@ -146,6 +162,18 @@ names.
 - Scraping is intentionally out of scope for Phase 2; all dashboard
   opportunities are seeded mock data.
 
+## Seed data
+
+Seed data runs automatically when the backend starts after migrations. It creates
+mock German listings, Swedish comparables, cost assumptions, deal opportunities,
+alerts, and model research intelligence profiles. To reseed locally, reset the
+PostgreSQL volume:
+
+```bash
+docker compose down -v
+FRONTEND_PORT=5173 BACKEND_PORT=8010 POSTGRES_PORT=55432 docker compose up --build
+```
+
 ## Model research seed modules
 
 Model-specific research profiles can live under `backend/app/seeds/model_research/`.
@@ -159,6 +187,30 @@ Use `/link-intake` to paste batches of mobile.de, AutoScout24, Blocket, or Bytbi
 links. The app classifies each URL by marketplace and whether it appears to be a
 search link or individual listing link. Search links are useful queues; open an
 individual listing from the search results before adding a manual deal.
+
+## Buy/no-buy decision support
+
+Deal detail pages show transparent assumptions and result tracking for manual
+decisions:
+
+- EUR/SEK rate
+- German purchase price in EUR and SEK
+- transport, registration, inspection, repair buffer, tax, and other costs
+- total landed cost
+- estimated Swedish resale price
+- expected profit
+- desired minimum profit
+- recommended max bid
+- confidence explanation with positive factors, negative factors, missing data,
+  comparable count, and summary
+- rejection reason/notes when a deal is rejected
+- actual outcome fields for bought/imported/listed/sold deals
+
+The deal scanner supports CSV import for German listing rows and CSV export for
+the current filtered deal view. Required import columns are `source`,
+`listing_url`, `brand`, `model`, `year`, `mileage_km`, `price_eur`,
+`seller_country`, `seller_type`, `fuel_type`, `transmission`, `trim`, and
+`notes`.
 
 ## Workflow pages
 
@@ -210,3 +262,15 @@ available for listing CRUD and Swedish comparable input:
 - Profit calculation lives in `backend/app/scoring/profit.py`.
 - Deal scoring lives in `backend/app/scoring/deal_scoring.py`.
 - Unit tests for deterministic scoring live in `backend/tests/test_scoring.py`.
+
+## Current MVP limitations
+
+- Scraping is not implemented. Marketplace links are only triaged for manual
+  work.
+- Pricing, comps, listing data, and outcomes must be entered or checked
+  manually.
+- Deal scoring is deterministic and conservative, but still needs calibration
+  against real outcomes.
+- Model research profiles are stored in the current compact `model_research`
+  table shape; richer profile JSON is retained in seed modules for future schema
+  expansion.

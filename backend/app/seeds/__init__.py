@@ -376,6 +376,9 @@ def _seed_deals(db: Session, listings_by_source_id: dict[str, CarListing], assum
         deal = Deal(
             foreign_listing_id=listing.id,
             estimated_swedish_price_sek=ESTIMATED_SWEDISH_PRICES[source_listing_id],
+            desired_minimum_profit_sek=assumptions.minimum_profit_threshold_sek,
+            recommended_max_bid_eur=profit.recommended_max_bid_eur,
+            eur_to_sek_rate=assumptions.eur_to_sek_rate,
             purchase_price_sek=profit.purchase_price_sek,
             transport_cost_sek=assumptions.default_transport_cost_sek,
             registration_cost_sek=assumptions.default_registration_cost_sek,
@@ -393,6 +396,7 @@ def _seed_deals(db: Session, listings_by_source_id: dict[str, CarListing], assum
             status="new",
             notes="Seeded mock opportunity for Phase 2 local MVP.",
             explanation=scoring.explanation,
+            confidence_explanation=scoring.confidence_explanation.model_dump(),
             risk_flags=scoring.risk_flags,
         )
         deals.append(deal)

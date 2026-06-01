@@ -16,6 +16,27 @@ export type LinkIntakeResponse = {
   items: LinkIntakeItem[];
 };
 
+export type ConfidenceExplanation = {
+  score: number;
+  positive_factors: string[];
+  negative_factors: string[];
+  missing_data: string[];
+  comparable_count: number;
+  summary: string;
+};
+
+export type ActualOutcome = {
+  actual_purchase_price_sek: number | null;
+  actual_transport_cost_sek: number | null;
+  actual_registration_cost_sek: number | null;
+  actual_repair_cost_sek: number | null;
+  actual_total_cost_sek: number | null;
+  actual_sale_price_sek: number | null;
+  actual_profit_sek: number | null;
+  days_to_sell: number | null;
+  lesson_learned: string | null;
+};
+
 export type Opportunity = {
   id: number;
   listing_id: number;
@@ -32,6 +53,9 @@ export type Opportunity = {
   fuel_type: string | null;
   transmission: string | null;
   price_eur: number;
+  desired_minimum_profit_sek: number;
+  recommended_max_bid_eur: number;
+  eur_to_sek_rate: number;
   purchase_price_sek: number;
   estimated_swedish_price_sek: number;
   total_landed_cost_sek: number;
@@ -42,8 +66,12 @@ export type Opportunity = {
   liquidity_score: number;
   deal_grade: string;
   status: string;
+  reject_reason: string | null;
+  reject_notes: string | null;
   risk_flags: string[];
   explanation: string | null;
+  confidence_explanation: ConfidenceExplanation;
+  actual_outcome: ActualOutcome;
   created_at: string;
 };
 
@@ -131,6 +159,8 @@ export type ListingCreate = {
 };
 
 export type CostBreakdown = {
+  eur_to_sek_rate: number;
+  german_purchase_price_eur: number;
   purchase_price_sek: number;
   transport_cost_sek: number;
   registration_cost_sek: number;
@@ -139,6 +169,10 @@ export type CostBreakdown = {
   tax_cost_sek: number;
   other_costs_sek: number;
   total_landed_cost_sek: number;
+  estimated_swedish_resale_price_sek: number;
+  expected_profit_sek: number;
+  desired_minimum_profit_sek: number;
+  recommended_max_bid_eur: number;
 };
 
 export type DealDetail = {
