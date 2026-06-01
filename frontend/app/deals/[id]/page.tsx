@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AppNav } from "../../../components/app-nav";
+import { ComparableForm } from "../../../components/comparable-form";
 import { notFound } from "next/navigation";
 
 import { getDealDetail } from "../../../lib/api";
@@ -227,6 +228,20 @@ export default async function DealDetailPage({ params }: PageProps) {
           ) : null}
         </article>
       </section>
+
+
+      <ComparableForm
+        compact
+        defaults={{
+          brand: opportunity.brand,
+          model: opportunity.model,
+          variant: opportunity.variant,
+          year: opportunity.year,
+          fuel_type: opportunity.fuel_type,
+          transmission: opportunity.transmission,
+          trim: opportunity.trim
+        }}
+      />
 
       <section className="table-card">
         <div className="table-header">

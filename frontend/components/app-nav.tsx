@@ -4,6 +4,7 @@ const links = [
   ["Dashboard", "/"],
   ["Deal scanner", "/deals"],
   ["Link intake", "/link-intake"],
+  ["Comparables", "/comparables"],
   ["Pipeline", "/pipeline"],
   ["Market research", "/market-research"],
   ["Settings", "/settings"]

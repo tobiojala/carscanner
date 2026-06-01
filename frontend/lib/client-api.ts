@@ -1,5 +1,7 @@
 import {
   API_BASE_URL,
+  type Comparable,
+  type ComparableCreate,
   type CostSettings,
   type Listing,
   type LinkIntakeResponse,
@@ -61,4 +63,10 @@ export async function previewLinks(urls: string[]): Promise<LinkIntakeResponse> 
   return requestJson<LinkIntakeResponse>("/api/link-intake/preview", "POST", {
     urls
   });
+}
+
+export async function createComparable(
+  payload: ComparableCreate
+): Promise<Comparable> {
+  return requestJson<Comparable>("/api/comparables", "POST", payload);
 }

@@ -672,3 +672,11 @@ tbody tr:hover {
   color: #2e7cf6;
   font-weight: 800;
 }
+
+.inline-form-card {
+  border: 1px solid rgba(119, 137, 165, 0.24);
+  border-radius: 24px;
+  margin-bottom: 24px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 20px 60px rgba(23, 32, 51, 0.08);
+}

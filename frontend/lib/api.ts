@@ -47,6 +47,23 @@ export type Opportunity = {
   created_at: string;
 };
 
+export type ComparableCreate = {
+  source?: string;
+  listing_url?: string;
+  brand: string;
+  model: string;
+  variant?: string;
+  year: number;
+  mileage_km?: number;
+  fuel_type?: string;
+  transmission?: string;
+  trim?: string;
+  price_sek: number;
+  location?: string;
+  seller_type?: string;
+  listing_age_days?: number;
+};
+
 export type Comparable = {
   id: number;
   source: string;
@@ -226,4 +243,8 @@ export async function getSettings(): Promise<CostSettings> {
 
 export async function getModelResearch(): Promise<ModelResearch[]> {
   return getJson<ModelResearch[]>("/api/model-research");
+}
+
+export async function getComparables(): Promise<Comparable[]> {
+  return getJson<Comparable[]>("/api/comparables");
 }

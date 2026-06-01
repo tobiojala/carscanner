@@ -182,6 +182,13 @@ Each opportunity in the dashboard links to `/deals/{id}`. The detail page uses
 `GET /api/deals/{id}` to show the foreign listing, deterministic cost breakdown,
 score explanation, risk flags, and matching Swedish comparable listings.
 
+## Swedish comparable input workflow
+
+Use `/comparables` to add Blocket or Bytbil resale listings manually. Deal detail
+pages also include a comparable form prefilled with the deal vehicle's brand,
+model, year, fuel, transmission, and trim. New comparables automatically appear
+on matching deal detail pages by brand/model.
+
 ## Manual input workflow
 
 The dashboard includes a Phase 2 manual listing form. Submitting it creates a
