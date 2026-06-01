@@ -11,6 +11,7 @@ from app.seeds.model_research import (
     build_bmw_320d_touring_seed,
     build_vw_golf_variant_mk7_seed,
     build_vw_passat_gte_variant_seed,
+    build_volvo_v60_seed,
 )
 
 DEFAULT_COST_ASSUMPTIONS = {
@@ -177,7 +178,6 @@ SEED_COMPARABLES = [
 ]
 
 MODEL_RESEARCH = [
-    ("Volvo", "V60", "D4", "2015-2020", ["R-Design", "Inscription"], ["fleet base cars"], "Confirm import equipment and service records.", 88, 72, 84, "Swedish brand trust supports resale.", Decimal("22000"), Decimal("25000"), Decimal("315000"), Decimal("355000")),
 ]
 
 ESTIMATED_SWEDISH_PRICES = {
@@ -284,6 +284,7 @@ def _seed_model_research(db: Session) -> None:
         build_bmw_320d_touring_seed(),
         build_vw_golf_variant_mk7_seed(),
         build_vw_passat_gte_variant_seed(),
+        build_volvo_v60_seed(),
     ])
 
     for research in research_objects:

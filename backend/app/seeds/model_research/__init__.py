@@ -12,10 +12,12 @@ __all__ = [
     "BMW_320D_TOURING_PROFILE",
     "VW_GOLF_VARIANT_MK7_PROFILE",
     "VW_PASSAT_GTE_VARIANT_PROFILE",
+    "VOLVO_V60_PROFILE",
     "build_audi_a4_avant_b9_seed",
     "build_bmw_320d_touring_seed",
     "build_vw_golf_variant_mk7_seed",
     "build_vw_passat_gte_variant_seed",
+    "build_volvo_v60_seed",
 ]
 
 from app.seeds.model_research.vw_passat_gte_variant import (
@@ -26,4 +28,9 @@ from app.seeds.model_research.vw_passat_gte_variant import (
 from app.seeds.model_research.vw_golf_variant_mk7 import (
     VW_GOLF_VARIANT_MK7_PROFILE,
     build_vw_golf_variant_mk7_seed,
+)
+
+from app.seeds.model_research.volvo_v60 import (
+    VOLVO_V60_PROFILE,
+    build_volvo_v60_seed,
 )
