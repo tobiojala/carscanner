@@ -810,3 +810,126 @@ tbody tr:hover {
     margin-top: 14px;
   }
 }
+
+.compare-selection-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.compare-link-button {
+  display: inline-flex;
+  align-items: center;
+  border: 0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  background: #172033;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.disabled-link {
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+.compare-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.compare-card,
+.compare-verdict-card {
+  border: 1px solid rgba(119, 137, 165, 0.24);
+  border-radius: 24px;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 20px 60px rgba(23, 32, 51, 0.08);
+}
+
+.compare-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.compare-card-header h2 {
+  margin: 0;
+}
+
+.compare-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 28px;
+  margin: 16px 0;
+}
+
+.compare-metrics {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 16px;
+}
+
+.compare-metrics div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid rgba(119, 137, 165, 0.16);
+  padding-bottom: 9px;
+}
+
+.compare-metrics dt {
+  color: #6b7d93;
+  font-weight: 700;
+}
+
+.compare-metrics dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 800;
+}
+
+.profit-bar {
+  height: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(16, 133, 82, 0.12);
+}
+
+.profit-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: #108552;
+}
+
+.compare-verdict-card button {
+  border: 0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  background: #172033;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.compare-verdict-body {
+  margin-top: 18px;
+}
+
+@media (max-width: 980px) {
+  .compare-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .compare-selection-actions,
+  .compare-card-header {
+    display: block;
+  }
+}

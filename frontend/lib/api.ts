@@ -3,6 +3,41 @@ export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   "http://localhost:8000";
 
+export type CompareDealItem = {
+  id: number;
+  title: string;
+  source: string;
+  year: number;
+  mileage_km: number;
+  price_eur: number;
+  total_landed_cost_sek: number;
+  estimated_swedish_price_sek: number;
+  expected_profit_sek: number;
+  margin_percent: number;
+  confidence_score: number;
+  risk_score: number;
+  liquidity_score: number;
+  deal_grade: string;
+  status: string;
+  risk_flags: string[];
+  recommended_max_bid_eur: number;
+};
+
+export type CompareDealsResponse = {
+  deals: CompareDealItem[];
+  best_profit_deal_id: number | null;
+  best_confidence_deal_id: number | null;
+  lowest_risk_deal_id: number | null;
+  average_expected_profit_sek: number;
+};
+
+export type CompareVerdictResponse = {
+  verdict: string;
+  best_deal_id: number | null;
+  reasons: string[];
+  cautions: string[];
+};
+
 export type LinkIntakeItem = {
   url: string;
   source: string;
@@ -281,4 +316,19 @@ export async function getModelResearch(): Promise<ModelResearch[]> {
 
 export async function getComparables(): Promise<Comparable[]> {
   return getJson<Comparable[]>("/api/comparables");
+}
+
+export async function compareDeals(dealIds: number[]): Promise<CompareDealsResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/compare/deals`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ deal_ids: dealIds }),
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    throw new Error(`Backend request failed: ${response.status}`);
+  }
+
+  return response.json() as Promise<CompareDealsResponse>;
 }

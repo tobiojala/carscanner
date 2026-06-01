@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AppNav } from "../../components/app-nav";
 import { CsvTools } from "../../components/csv-tools";
+import { DealsTableWithCompare } from "../../components/compare/DealsTableWithCompare";
 import { getOpportunities, type OpportunityFilters } from "../../lib/api";
 
 export const dynamic = "force-dynamic";
@@ -124,49 +125,8 @@ export default async function DealsPage({ searchParams }: PageProps) {
         </form>
       </section>
 
-      <section className="table-card">
-        <div className="table-header">
-          <div>
-            <h2>{opportunities.length} matching deals</h2>
-            <p>Click a vehicle to open the detail page.</p>
-          </div>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Vehicle</th>
-              <th>Source</th>
-              <th>EUR</th>
-              <th>Landed</th>
-              <th>Profit</th>
-              <th>Confidence</th>
-              <th>Risk</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {opportunities.map((opportunity) => (
-              <tr key={opportunity.id}>
-                <td>
-                  <Link className="vehicle detail-link" href={`/deals/${opportunity.id}`}>
-                    {opportunity.year} {opportunity.brand} {opportunity.model}
-                  </Link>
-                  <div className="muted">
-                    {opportunity.trim ?? opportunity.variant ?? "Unknown"} · {numberFormatter.format(opportunity.mileage_km)} km
-                  </div>
-                </td>
-                <td>{opportunity.source}</td>
-                <td>{eurFormatter.format(opportunity.price_eur)}</td>
-                <td>{sekFormatter.format(opportunity.total_landed_cost_sek)}</td>
-                <td className="positive">{sekFormatter.format(opportunity.expected_profit_sek)}</td>
-                <td>{opportunity.confidence_score}</td>
-                <td>{opportunity.risk_score}</td>
-                <td><span className="badge neutral-badge">{opportunity.status}</span></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+      <DealsTableWithCompare opportunities={opportunities} />
+
     </main>
   );
 }

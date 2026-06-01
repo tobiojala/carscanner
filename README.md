@@ -188,6 +188,14 @@ links. The app classifies each URL by marketplace and whether it appears to be a
 search link or individual listing link. Search links are useful queues; open an
 individual listing from the search results before adding a manual deal.
 
+## Deal comparison workflow
+
+Use `/deals` to select 2-4 opportunities with the compare checkboxes, then open
+`/compare` for side-by-side profit, risk, confidence, liquidity, and max-bid
+comparison. The compare page includes an on-demand local verdict button that
+uses deterministic backend heuristics; it does not call external AI services or
+scrape marketplaces.
+
 ## Buy/no-buy decision support
 
 Deal detail pages show transparent assumptions and result tracking for manual
