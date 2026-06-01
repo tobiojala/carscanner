@@ -15,7 +15,7 @@ const fields: Array<[keyof ActualOutcome, string]> = [
   ["days_to_sell", "Days to sell"]
 ];
 
-export function ActualOutcomeForm({
+export function DealOutcomeForm({
   dealId,
   outcome
 }: {

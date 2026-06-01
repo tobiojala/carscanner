@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { ActualOutcomeForm } from "../../../components/actual-outcome-form";
+import { DealOutcomeForm } from "../../../components/deal-outcome-form";
 import { AppNav } from "../../../components/app-nav";
 import { ComparableForm } from "../../../components/comparable-form";
 import { notFound } from "next/navigation";
@@ -297,7 +297,7 @@ export default async function DealDetailPage({ params }: PageProps) {
 
 
       {(["bought", "imported", "listed_in_sweden", "sold"].includes(opportunity.status)) ? (
-        <ActualOutcomeForm dealId={opportunity.id} outcome={opportunity.actual_outcome} />
+        <DealOutcomeForm dealId={opportunity.id} outcome={opportunity.actual_outcome} />
       ) : null}
 
       <ComparableForm
