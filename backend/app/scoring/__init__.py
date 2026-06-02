@@ -1,4 +1,4 @@
-from app.scoring.deal_scoring import DealScoringInput, DealScoringResult, score_deal
+from app.scoring.engine import DealScoringInput, DealScoringResult, score_deal
 from app.scoring.outcome import ActualOutcomeInput, ActualOutcomeResult, calculate_actual_outcome
 from app.scoring.profit import ProfitCalculationInput, ProfitCalculationResult, calculate_profit
 
