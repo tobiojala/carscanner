@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { AppNav } from "../components/app-nav";
-import { ManualListingForm } from "../components/manual-listing-form";
+import { GermanListingForm } from "../components/german-listing-form";
 import { getDashboardSummary, getOpportunities } from "../lib/api";
 
 export const dynamic = "force-dynamic";
@@ -135,7 +135,7 @@ export default async function DashboardPage() {
         </article>
       </section>
 
-      <ManualListingForm />
+      <GermanListingForm />
 
       <section className="table-card">
         <div className="table-header">

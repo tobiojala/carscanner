@@ -37,7 +37,7 @@ const initialState: FormState = {
   service_history: "Full service history"
 };
 
-export function ManualListingForm() {
+export function GermanListingForm() {
   const router = useRouter();
   const [form, setForm] = useState<FormState>(initialState);
   const [message, setMessage] = useState<string | null>(null);
