@@ -20,11 +20,6 @@ from app.schemas import (
     ListingRead,
     ListingUpdate,
 )
-from app.services.link_intake_service import (
-    LinkIntakeRequest,
-    LinkIntakeResponse,
-    preview_links,
-)
 from app.services.listing_service import (
     calculate_deal,
     create_comparable,
@@ -193,11 +188,6 @@ def patch_model_research(
     db: Session = Depends(get_db),
 ) -> ModelResearchRead:
     return update_model_research(db, research_id, payload)
-
-
-@router.post("/link-intake/preview", response_model=LinkIntakeResponse)
-def post_link_intake_preview(payload: LinkIntakeRequest) -> LinkIntakeResponse:
-    return preview_links(payload)
 
 
 @router.get("/dashboard", response_model=DashboardSummary)

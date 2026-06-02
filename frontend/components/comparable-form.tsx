@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { FormEvent, useState, useTransition } from "react";
 
-import { createComparable } from "../lib/client-api";
+import { createComparable } from "../lib/api";
 
 type ComparableFormDefaults = {
   brand?: string;

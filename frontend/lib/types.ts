@@ -1,3 +1,8 @@
+/*
+ * Car Arbitrage Scanner
+ * Copyright (c) 2026 Tobias Bergmark
+ * All rights reserved.
+ */
 export const API_BASE_URL =
   process.env.API_BASE_URL ??
   process.env.NEXT_PUBLIC_API_BASE_URL ??

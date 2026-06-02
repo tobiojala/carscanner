@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { FormEvent, useState, useTransition } from "react";
 
-import { updateActualOutcome } from "../lib/client-api";
+import { updateActualOutcome } from "../lib/api";
 import type { ActualOutcome } from "../lib/api";
 
 const fields: Array<[keyof ActualOutcome, string]> = [

@@ -15,11 +15,11 @@ import type { CompareDealItem } from "../lib/api";
 
 interface Props {
   opportunities: CompareDealItem[];
-  sekFormatter: Intl.NumberFormat;
-  eurFormatter: Intl.NumberFormat;
 }
 
-export function DealsTable({ opportunities, sekFormatter, eurFormatter }: Props) {
+export function DealsTable({ opportunities }: Props) {
+  const sekFormatter = new Intl.NumberFormat("sv-SE", { style: "currency", currency: "SEK", maximumFractionDigits: 0 });
+  const eurFormatter = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
   const router = useRouter();
   const [selected, setSelected] = useState<Set<number>>(new Set());
 

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { FormEvent, useState, useTransition } from "react";
 
-import { updateSettings } from "../lib/client-api";
+import { updateSettings } from "../lib/api";
 import type { CostSettings } from "../lib/api";
 
 const fields: Array<[keyof CostSettings, string]> = [

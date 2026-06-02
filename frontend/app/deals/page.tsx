@@ -17,17 +17,6 @@ const STAGES = [
   { label: "Sold",       value: "sold"       },
 ];
 
-const sekFormatter = new Intl.NumberFormat("sv-SE", {
-  style: "currency",
-  currency: "SEK",
-  maximumFractionDigits: 0,
-});
-
-const eurFormatter = new Intl.NumberFormat("de-DE", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 0,
-});
 
 interface Props {
   searchParams: {
@@ -104,8 +93,6 @@ export default async function DealsPage({ searchParams }: Props) {
         ) : (
           <DealsTable
             opportunities={opportunities}
-            sekFormatter={sekFormatter}
-            eurFormatter={eurFormatter}
           />
         )}
       </main>

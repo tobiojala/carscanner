@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState, useTransition } from "react";
 
-import { updateDealStatus } from "../lib/client-api";
+import { updateDealStatus } from "../lib/api";
 import type { Opportunity } from "../lib/api";
 
 const rejectReasons = [

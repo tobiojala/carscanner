@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { ChangeEvent, useState, useTransition } from "react";
 
-import { importListingsCsv } from "../lib/client-api";
+import { importListingsCsv } from "../lib/api";
 import type { Opportunity } from "../lib/api";
 
 const exportHeaders = [

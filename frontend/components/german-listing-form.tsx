@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { FormEvent, useState, useTransition } from "react";
 
-import { calculateDeal, createListing } from "../lib/client-api";
+import { calculateDeal, createListing } from "../lib/api";
 
 type FormState = {
   brand: string;

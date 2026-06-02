@@ -1,3 +1,8 @@
+"""
+Car Arbitrage Scanner
+Copyright (c) 2026 Tobias Bergmark
+All rights reserved.
+"""
 from pydantic import BaseModel, Field
 
 

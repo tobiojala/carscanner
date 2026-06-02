@@ -1,3 +1,8 @@
+"""
+Car Arbitrage Scanner
+Copyright (c) 2026 Tobias Bergmark
+All rights reserved.
+"""
 from decimal import Decimal, ROUND_HALF_UP
 
 from pydantic import BaseModel, Field
